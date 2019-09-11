@@ -1,0 +1,207 @@
+ispLEVER Auto-Make Log File
+---------------------------
+
+Updating: JEDEC File
+Start to record tcl script...
+Finished recording TCL script.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\Synpwrap.exe -e address_decoder -target ispGAL -pro '
+
+Copyright (c) 1991-2010 Lattice Semiconductor Corporation,  All rights reserved.
+Version : 2.0.00.17.20.15
+
+Done sucessfully with exit code 0.
+#Build: Synplify Pro I-2014.03LC , Build 063R, May 27 2014
+#install: C:\ispLEVER_Classic2_0\synpbase
+#OS: Windows 7 6.1
+#Hostname: ITK-D653
+
+#Implementation: decoderchip
+
+$ Start of Compile
+#Wed Sep 04 14:07:43 2019
+
+Synopsys VHDL Compiler, version comp201403rcp1, Build 060R, built May 27 2014
+@N|Running in 64-bit mode
+Copyright (C) 1994-2014 Synopsys, Inc. This software and the associated documentation are proprietary to Synopsys, Inc. This software may only be used in accordance with the terms and conditions of a written license agreement with Synopsys, Inc.  All other use, reproduction, or distribution of this software is strictly prohibited.
+
+@N: CD720 :"C:\ispLEVER_Classic2_0\synpbase\lib\vhd\std.vhd":123:18:123:21|Setting time resolution to ns
+@N:"C:\decoderchip\address_decoder.vhd":6:7:6:21|Top entity is set to address_decoder.
+File C:\decoderchip\address_decoder.vhd changed - recompiling
+VHDL syntax check successful!
+File C:\decoderchip\address_decoder.vhd changed - recompiling
+@N: CD630 :"C:\decoderchip\address_decoder.vhd":6:7:6:21|Synthesizing work.address_decoder.behave 
+@W: CD434 :"C:\decoderchip\address_decoder.vhd":34:24:34:25|Signal a8 in the sensitivity list is not used in the process
+Post processing for work.address_decoder.behave
+@W: CL159 :"C:\decoderchip\address_decoder.vhd":11:0:11:1|Input a8 is unused
+@END
+
+At c_vhdl Exit (Real Time elapsed 0h:00m:00s; CPU Time elapsed 0h:00m:00s; Memory used current: 68MB peak: 70MB)
+
+Process took 0h:00m:01s realtime, 0h:00m:01s cputime
+# Wed Sep 04 14:07:44 2019
+
+###########################################################]
+Synopsys Netlist Linker, version comp201403rcp1, Build 060R, built May 27 2014
+@N|Running in 64-bit mode
+File C:\decoderchip\synwork\address_decoder_comp.srs changed - recompiling
+
+At syn_nfilter Exit (Real Time elapsed 0h:00m:00s; CPU Time elapsed 0h:00m:00s; Memory used current: 67MB peak: 67MB)
+
+Process took 0h:00m:01s realtime, 0h:00m:01s cputime
+# Wed Sep 04 14:07:45 2019
+
+###########################################################]
+
+Synplicity VHDL/Verilog HDL Synthesizer finished successfully
+
+Done: completed successfully.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\edif2blf.exe -edf "address_decoder.edi" -out "address_decoder.bl0" -err automake.err -log "address_decoder.log" -prj addressdecoder -lib "C:\ispLEVER_Classic2_0\ispcpld/dat/mach.edn" -cvt YES -net_Vcc VCC -net_GN...'
+
+Starting EDIF2BLIF....
+readEDIF ended normally.
+
+EDIF2BLIF: Warning: Remove floating instance: :
+	a8
+
+Inspect circuit address_decoder
+    Number of input ports   : 4
+    Number of output ports  : 4
+    Number of bidir ports   : 0
+    Number of instances     : 17
+    Number of nets          : 20
+
+No design errors found in circuit address_decoder
+
+WriteBLIF ended normally.
+
+Done: completed successfully.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\iblifopt.exe "address_decoder.bl0" -red bypin choose -collapse -pterms 8 -family -err automake.err -gui'
+
+BLIFOPT  Open-ABEL Optimizer 
+ispLEVER Classic 2.0 Copyright(C), 1992-2005, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+U.C. Berkeley, SIS Ver. 1.0, supported by Lattice Semiconductor Corp.
+Reading Open-ABEL 2 file address_decoder.bl0...
+Node a11_c has been collapsed.
+Node a10_c_i has been collapsed.
+Node a9_c_i has been collapsed.
+Node a10_c has been collapsed.
+Node a9_c has been collapsed.
+Node un2_a10 has been collapsed.
+Node un2_a9 has been collapsed.
+Node un1_a9_0 has been collapsed.
+Node un1_a10_i has been collapsed.
+Node un1_a9 has been collapsed.
+Node un2_a9_i has been collapsed.
+Node un2_a10_i has been collapsed.
+Node a11_i has been collapsed.
+Performing 'bypin choose' optimization...
+Writing Open-ABEL 2 (BLIF) file address_decoder.bl1...
+
+BLIFOPT complete - 0 errors, 0 warnings. Time: 1 seconds
+
+Done: completed successfully.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\iblflink.exe "address_decoder.bl1" -o "addressdecoder.bl2" -omod address_decoder -family -err automake.err -gui'
+
+BLIFLINK  Top-Down Design Linker
+ispLEVER Classic 2.0 Copyright(C), 1992-2005, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+
+Top-level file: 'address_decoder.bl1'
+
+Hierarchical BLIF: 'addressdecoder.bl2'
+
+BLIFLINK complete.  Time: 1 second 
+
+Done: completed successfully.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\iblifopt.exe addressdecoder.bl2 -red bypin choose -sweep -collapse all -pterms 8 -err automake.err -gui'
+
+BLIFOPT  Open-ABEL Optimizer 
+ispLEVER Classic 2.0 Copyright(C), 1992-2005, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+U.C. Berkeley, SIS Ver. 1.0, supported by Lattice Semiconductor Corp.
+Reading Open-ABEL 2 file addressdecoder.bl2...
+Performing 'bypin choose' optimization...
+Writing Open-ABEL 2 (BLIF) file addressdecoder.bl3...
+
+BLIFOPT complete - 0 errors, 0 warnings. Time: 1 seconds
+
+Done: completed successfully.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\idiofft.exe addressdecoder.bl3 -pla -o addressdecoder.tt2 -dev p16v8 -define N -err automake.err -gui'
+
+DIOFFT  Flip-Flop Transformation program
+ispLEVER Classic 2.0 Copyright(C), 1992-2005, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+Input file: addressdecoder.bl3.
+Output file: addressdecoder.tt2.
+Cross reference file: addressdecoder.xrf.
+
+Shortening signal names...
+Writing signal name cross reference file addressdecoder.xrf... 
+
+DIOFFT complete. - Time 0 seconds
+
+Done: completed successfully.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\fit.exe addressdecoder.tt2 -dev p16v8 -str -err automake.err -gui'
+
+FIT  Generic Device Fitter
+ispLEVER Classic 2.0 Copyright(C), 1992-2005, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+Input file: 'addressdecoder.tt2'
+Device 'p16v8'
+Note 4161: Using device architecture type P16V8AS.
+Warning 4154:Signal 'a8' (pin 4) is not used in the design -
+neither the signal nor its pin will be reassigned.
+Design FITS
+Pin-assigned pla: 'addressdecoder.tt3'
+
+FIT complete.  Time: 1 second.
+
+Done: completed successfully.
+
+Starting: 'C:\ispLEVER_Classic2_0\ispcpld\bin\fuseasm.exe addressdecoder.tt3 -dev p16v8 -o addressdecoder.jed -ivec NoInput.tmv -rep addressdecoder.rpt -doc brief -con ptblown -for brief -err automake.err -gui'
+
+FUSEASM  Fusemap Assembler
+ispLEVER Classic 2.0 Copyright(C), 1992-2005, Lattice Semiconductor Corporation. All rights reserved
+Portions Copyright(c), 1992-1999, Vantis Corporation
+Portions Copyright(C), 1993-1998, Data I/O Corporation
+Portions Copyright(C), 1997-1998, MINC Washington Corporation
+Portions Copyright(C), Alan Phillips, Lancaster University Computer Centre 1992-1998
+Note 5144: Could not open vector file NoInput.tmv
+
+Input file: 'addressdecoder.tt3'
+Device: 'P16V8AS'
+Building model...
+Choosing best polarities...
+Mapping equations...
+.
+3 of 64 terms used; 0 vectors loaded
+Programmer load file: 'addressdecoder.jed'
+Generating report...
+Report file: 'addressdecoder.rpt'
+
+FUSEASM complete.  Time: 1 second 
+
+Done: completed successfully.
