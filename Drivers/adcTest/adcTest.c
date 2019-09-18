@@ -74,33 +74,43 @@ void adcInit( void )
 	DDRE &= ~(1 << PE0);
 	
 	// PortD pin 2 and 3 as input
-	DDRD |= (1 << PD2);
-	DDRD |= (1 << PD3);
+	DDRD &= ~(1 << PD2);
+	DDRD &= ~(1 << PD3);
 	
 	// Set pull-up resistor
 	PORTE |= (1 << PE0);
 	
+	// pull-down
+	PORTD &= ~(1 << PD2);
+	PORTD &= ~(1 << PD3);
+	
 	//disable global interrupt
 	cli();
 	
-	//Interrupt on rising edge
-	EMCUCR |= (1 << ISC11);
+	// INT0 Interrupt on rising edge
 	EMCUCR |= (1 << ISC01);
-	EMCUCR |= (1 << ISC10);
-	EMCUCR |= (1 << ISC00);
+	EMCUCR |= (1 << ISC00);	
 	
-	//Enable interrupt on PE0
-	//GICR |= (1<<INT0) | (1<<INT1);
+	// INT1 Interrupt on rising edge
+	EMCUCR |= (1 << ISC11);
+	EMCUCR |= (1 << ISC10);
+	
+	
+	//Enable interrupt on PD2
+	GICR |= (1<<INT0);
+	
+	//Enable interrupt on PD3
+	GICR |= (1<<INT1);
 	
 	//enable global interrupt
 	sei();
 	
 }
 
-//ISR(INT2_vect)
-//{
-//	ADCdata = *extADC;
-//}
+ISR(INT2_vect)
+{
+	printf("INT2\n\r");
+}
 
 ISR(INT0_vect)
 {
@@ -166,12 +176,15 @@ int main(void)
 		
     while(1)
     {
-		//if(PIND&0x08)
-		//{
-		//	printf("Button WORKS!\n\r");
-		//}
-		data = getADCdata(CHANNEL1);
-		_delay_ms(100);
+		if(PIND&0x04)
+		{
+			printf("Left button WORKS!\n\r");
+		}
+		if(PIND&0x08)
+		{
+			printf("Right button WORKS!\n\r");
+		}
+		data = getADCdata(CHANNEL2);
 		printf("%d\n\r", data);
 
        _delay_ms(10);
