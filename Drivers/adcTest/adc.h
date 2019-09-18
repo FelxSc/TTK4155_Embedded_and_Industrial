@@ -1,0 +1,2 @@
+#define ADC_ADDRESS 0x1400
+#
