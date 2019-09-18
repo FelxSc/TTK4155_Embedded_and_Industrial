@@ -10,6 +10,7 @@
 #define FOSC 4915200// Clock Speed
 #define BAUD 9600
 #define MYUBRR FOSC/16/BAUD-1
+#define JOYSTICK_THRESOLD 25 //Filter out fluctuations when joystick is at the center
 
 #include <avr/io.h>
 #include <avr/common.h>
@@ -23,9 +24,9 @@
 #include "adc.h"
 
 
-typedef enum {CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4} channel_t;		// datatype to select adc channels
+joystick_data_t joystickCalibration;
 	
-volatile uint8_t* extADC = ADC_ADDRESS;
+volatile uint8_t* extADC = (uint8_t*) ADC_ADDRESS;
 volatile uint8_t ADCdata;
 
 
@@ -73,54 +74,50 @@ void adcInit( void )
 	// PortE pin0 as input
 	DDRE &= ~(1 << PE0);
 	
+	// PortB pin0 as input
+	DDRB &= ~(1 << PB0);
+	
 	// PortD pin 2 and 3 as input
 	DDRD &= ~(1 << PD2);
 	DDRD &= ~(1 << PD3);
 	
-	// Set pull-up resistor
+	// Set pull-up resistor PE0 & PB0
 	PORTE |= (1 << PE0);
+	PORTB |= (1 << PB0);
 	
 	// pull-down
 	PORTD &= ~(1 << PD2);
 	PORTD &= ~(1 << PD3);
 	
 	//disable global interrupt
-	cli();
+	//cli();
+	
+	// INT2 Interrupt on falling edge
+	//EMCUCR &= ~(1 << ISC2);
 	
 	// INT0 Interrupt on rising edge
-	EMCUCR |= (1 << ISC01);
-	EMCUCR |= (1 << ISC00);	
+	//EMCUCR |= (1 << ISC01);
+	//EMCUCR |= (1 << ISC00);	
 	
 	// INT1 Interrupt on rising edge
-	EMCUCR |= (1 << ISC11);
-	EMCUCR |= (1 << ISC10);
+	//EMCUCR |= (1 << ISC11);
+	//EMCUCR |= (1 << ISC10);
 	
+	// Enable interrupt on PE0
+	//GICR |= (1 << INT2);
 	
 	//Enable interrupt on PD2
-	GICR |= (1<<INT0);
+	//GICR |= (1<<INT0);
 	
 	//Enable interrupt on PD3
-	GICR |= (1<<INT1);
+	//GICR |= (1<<INT1);
 	
 	//enable global interrupt
-	sei();
+	//sei();
 	
 }
 
-ISR(INT2_vect)
-{
-	printf("INT2\n\r");
-}
 
-ISR(INT0_vect)
-{
-	printf("INT0\n\r");
-}
-
-ISR(INT1_vect)
-{
-	printf("INT1\n\r");
-}
 
 void select_ADC_channel(channel_t channel)
 {	
@@ -151,27 +148,105 @@ uint8_t getADCdata(channel_t channel)
 	return ADCdata;
 }
 
-//uint8_t ADC_read(uint8_t channel) {
-//	volatile uint8_t *adc = (uint8_t *) channel;
-//	_delay_us(1);
-//	adc[channel] = channel;
-//	while (PINE & (1<<PE0));  //Wait until ADC conversion process finishes (supposedly 40us according to data sheet)
-//
-//	_delay_us(60);     //(at least 600ns according to data sheet)
-//
-//	return *adc;
-//}
+
+
+
+
+void sliderDriver()
+{
+	uint8_t leftSliderData, rightSliderData;
+	leftSliderData = getADCdata(CHANNEL1);	//Left slider
+	printf("\n\rLeft slider: %d \n\r", leftSliderData);
+	
+	
+	rightSliderData = getADCdata(CHANNEL2);	// Right slider
+	printf("Right slider: %d \n\r", rightSliderData);
+}
+
+joystick_direction_t get_joystick_direction(uint8_t joyst_coord_X, uint8_t joyst_coord_Y){
+	
+	int8_t signed_joyst_coord_X, signed_joyst_coord_Y;
+	uint8_t abs_signed_joyst_coord_X, abs_signed_joyst_coord_Y;
+	
+	signed_joyst_coord_X = joyst_coord_X - 128; //joystickCalibration.x_offset;
+	signed_joyst_coord_Y = joyst_coord_Y - 128; //joystickCalibration.y_offset;
+	abs_signed_joyst_coord_X = abs(signed_joyst_coord_X);
+	abs_signed_joyst_coord_Y = abs(signed_joyst_coord_Y);
+	
+	
+	
+	if (abs_signed_joyst_coord_X <= JOYSTICK_THRESOLD && abs_signed_joyst_coord_Y <= JOYSTICK_THRESOLD){
+		return CENTER;
+	}
+	
+	if (signed_joyst_coord_X > abs_signed_joyst_coord_Y )
+	return RIGHT;
+	else if (signed_joyst_coord_X < - abs_signed_joyst_coord_Y)
+	return LEFT;
+	else if (signed_joyst_coord_Y > abs_signed_joyst_coord_X)
+	return UP;
+	else
+	return DOWN;
+	
+}
+
+// When joystick is centered the measured center value will be the offset
+void joystickCalibrate( void )
+{
+	
+	joystickCalibration.x_offset = getADCdata(CHANNEL4); //X axis on channel 4
+	joystickCalibration.y_offset = getADCdata(CHANNEL3); //Y axis on channel 3
+	
+}
+
+void joystickDriver()
+{
+	uint8_t x_axis;
+	uint8_t y_axis;
+	x_axis = getADCdata(CHANNEL4); //X axis on channel 4
+	y_axis = getADCdata(CHANNEL3); //Y axis on channel 3
+	
+	
+	joystick_direction_t joyst_direction; //The value should be: CENTER/LEFT/RIGHT/DOWN/UP
+	joyst_direction = get_joystick_direction(x_axis, y_axis);
+	
+	
+	switch(joyst_direction){
+		case CENTER:
+		printf("CENTER\n\r");
+		break;
+		case LEFT:
+		printf("LEFT\n\r");
+		break;
+		case RIGHT:
+		printf("RIGHT\n\r");
+		break;
+		case DOWN:
+		printf("DOWN\n\r");
+		break;
+		case UP:
+		printf("UP\n\r");
+		break;
+		default:
+		printf("The function get_joystick_direction is not returning none of these: CENTER/LEFT/RIGHT/DOWN/UP\n\r");
+				
+	}
+	printf("Joystick X = %d \n\r", x_axis);
+	printf("Joystick Y = %d \n\r", y_axis);
+}
+
+
+
 
 int main(void) 
 {
-	uint8_t data;
-	
 		USART_Init ( MYUBRR );
 		fdevopen(&USART_Transmit, &USART_Receive);
 		ExernalMemoryInit();
 		adcInit();
 		
-		select_ADC_channel(CHANNEL3);
+		joystickCalibrate();
+		
 		printf("Start Test");
 		
     while(1)
@@ -184,9 +259,14 @@ int main(void)
 		{
 			printf("Right button WORKS!\n\r");
 		}
-		data = getADCdata(CHANNEL2);
-		printf("%d\n\r", data);
+		if(!PINB&0x01)
+		{
+			printf("Center button WORKS!\n\r");
+		}	
+		
+		joystickDriver();	
+		sliderDriver();
 
-       _delay_ms(10);
+       _delay_ms(500);
     }
 }
