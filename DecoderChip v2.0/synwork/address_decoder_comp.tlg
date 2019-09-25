@@ -1,0 +1,6 @@
+@N: CD630 :"C:\decoderchip\galmodified\galmodified.vhd":6:7:6:21|Synthesizing work.address_decoder.behave 
+@W: CD434 :"C:\decoderchip\galmodified\galmodified.vhd":34:20:34:21|Signal a9 in the sensitivity list is not used in the process
+@W: CD434 :"C:\decoderchip\galmodified\galmodified.vhd":34:24:34:25|Signal a8 in the sensitivity list is not used in the process
+Post processing for work.address_decoder.behave
+@W: CL159 :"C:\decoderchip\galmodified\galmodified.vhd":10:0:10:1|Input a9 is unused
+@W: CL159 :"C:\decoderchip\galmodified\galmodified.vhd":11:0:11:1|Input a8 is unused

@@ -1,0 +1,17 @@
+Section Cross Reference File
+Design 'address_decoder' created Wed Sep 25 16:06:15 2019
+   Type              New Name                               Original Name
+// ----------------------------------------------------------------------
+   Net                 vcc_n_n                                       VCC
+End
+Section Type      Name
+// ----------------------------------------------------------------------
+        Input     a11
+        Input     a10
+        Input     a9
+        Input     a8
+        Output     ram_cs
+        Output     adc_cs
+        Output     oled_cs
+        Output     oled_dc
+End

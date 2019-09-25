@@ -1,0 +1,7 @@
+C:\ispLEVER_Classic2_0\synpbase\bin64\syn_nfilter.exe  -link  -top  address_decoder  -multisrs  C:\decoderchip\galmodified\synwork\address_decoder_comp.srs  -osyn  C:\decoderchip\galmodified\synwork\address_decoder_mult.srs  -log  C:\decoderchip\galmodified\synlog\address_decoder_multi_srs_gen.srr 
+rc:0 success:1
+C:\decoderchip\galmodified\synwork\address_decoder_comp.srs|i|1569420368|1876
+C:\decoderchip\galmodified\synwork\address_decoder_mult.srs|o|1569420369|1844
+C:\decoderchip\galmodified\synlog\address_decoder_multi_srs_gen.srr|o|1569420369|376
+C:\ispLEVER_Classic2_0\synpbase\bin\syn_nfilter.exe|i|1401223936|2741760
+C:\ispLEVER_Classic2_0\synpbase\bin64\syn_nfilter.exe|i|1401224132|6337536
