@@ -19,6 +19,7 @@ typedef struct joystick_data
 {
 	uint8_t x_offset;
 	uint8_t y_offset;
+	joystick_direction_t joystickPosition;
 	uint8_t menuCounter;
 }joystick_data_t;
 
