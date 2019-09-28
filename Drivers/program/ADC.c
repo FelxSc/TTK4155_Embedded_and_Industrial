@@ -15,9 +15,9 @@
 #include <stdint.h>
 
 #include "ADC.h"
+#include "JOYSTICK.h"
 
-
-joystick_data_t joystickCalibration;
+//joystick_data_t joystickCalibration;
 	
 volatile uint8_t* extADC = (uint8_t*) ADC_ADDRESS;
 volatile uint8_t ADCdata;
@@ -107,7 +107,7 @@ uint8_t getADCdata(channel_t channel)
 
 
 
-
+/*
 void sliderDriver()
 {
 	uint8_t leftSliderData, rightSliderData;
@@ -190,7 +190,7 @@ void joystickDriver()
 	printf("Joystick X = %d \n\r", x_axis);
 	printf("Joystick Y = %d \n\r", y_axis);
 }
-
+*/
 
 
 /*

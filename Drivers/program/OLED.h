@@ -34,9 +34,19 @@ void OLEDPrintf(char* data, ...);
 void OLEDinvPrintf(char* data, ...);
 void OLEDGotoPosition(uint8_t line, uint8_t column);
 int OLEDinvertedPrint(unsigned char c);
+void OLEDprintArrowRight(void);
+void OLEDprintArrowLeft(void);
 
 
 void write_c(uint8_t command);	// write commands to OLED
 void write_d(char data);		// write data to OLED
+
+typedef struct OLEDposition
+{
+	uint8_t line;
+	uint8_t column;
+}OLEDposition_t;
+
+OLEDposition_t OLEDpos;
 
 #endif // OLED_H
