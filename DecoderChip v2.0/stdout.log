@@ -1,0 +1,53 @@
+Running in Lattice mode
+
+
+Starting:    C:\ispLEVER_Classic2_0\synpbase\win64\mbin\synbatch.exe
+Install:     C:\ispLEVER_Classic2_0\synpbase
+Date:        Wed Sep 25 16:06:08 2019
+Version:     I-2014.03LC 
+
+Arguments:   -product synplify_pro  -batch c:/decoderchip/galmodified\address_decoder.prj
+ProductType: synplify_pro
+
+
+
+
+
+log file: "C:\decoderchip\galmodified\address_decoder.srr"
+
+Running address_decoder|galmodified
+
+Running: Compile on address_decoder|galmodified
+
+Running: Compile Process on address_decoder|galmodified
+
+Running: Compile Input on address_decoder|galmodified
+Copied C:\decoderchip\galmodified\synwork\address_decoder_comp.srs to C:\decoderchip\galmodified\address_decoder.srs
+compiler Completed
+Return Code: 0
+Run Time:0h:00m:01s
+
+Running: Multi-srs Generator on address_decoder|galmodified
+Copied C:\decoderchip\galmodified\synwork\address_decoder_comp.srs to C:\decoderchip\galmodified\synwork\address_decoder_s.srs
+multi_srs_gen Completed
+Return Code: 0
+Run Time:0h:00m:00s
+Copied C:\decoderchip\galmodified\synwork\address_decoder_mult.srs to C:\decoderchip\galmodified\address_decoder.srs
+Copied C:\decoderchip\galmodified\address_decoder.srr to C:\decoderchip\galmodified\address_decoder.srf
+Complete: Compile Process on address_decoder|galmodified
+Complete: Compile on address_decoder|galmodified
+
+Running: Map on address_decoder|galmodified
+
+Running: Map & Optimize on address_decoder|galmodified
+fpga_mapper Completed
+Return Code: 0
+Run Time:0h:00m:01s
+Complete: Map on address_decoder|galmodified
+Copied C:\decoderchip\galmodified\address_decoder.srr to C:\decoderchip\galmodified\address_decoder.srf
+Complete: Logic Synthesis on address_decoder|galmodified
+
+exit status=0
+
+exit status=0
+

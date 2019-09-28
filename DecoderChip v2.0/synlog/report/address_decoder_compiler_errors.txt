@@ -1,0 +1,4 @@
+@E: CD493 :"C:\decoderchip\galmodified\galmodified.vhd":48:8:48:8|character '{' is not allowed
+@E: CD493 :"C:\decoderchip\galmodified\galmodified.vhd":53:1:53:1|character '}' is not allowed
+@E|Parse errors encountered - exiting
+
