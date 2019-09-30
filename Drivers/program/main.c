@@ -1,4 +1,6 @@
-#define F_CPU 4915200 // 4.9152 Mhz
+//#ifndef F_CPU
+#define F_CPU 4915200UL // 4.9152 Mhz
+//#endif
 
 #include <avr/io.h>
 #include <avr/common.h>
@@ -19,6 +21,8 @@
 #include "ADC.h"
 #include "Menu.h"
 #include "USART.h"
+#include "JOYSTICK.h"
+
 
 void ExernalMemoryInit( void )
 {
@@ -36,11 +40,30 @@ int main()
 	adcInit();
 	OLEDInit();
 	
-	menu();
+	//joystickCalibrate();
+	
+	menuInit();
+	
+	
 	
 	while(1)
 	{
 		
+		int selectedMenu = selectMenu();
+		//int num = (int) selectedMenu;
+		
+		//printf("-%d-", selectedMenu);
+		
+		//printf("Running!\n\r");
+/*		printf("x-offset = %d\n\r", joystickCalibration.x_offset);
+		printf("y-offset = %d\n\r", joystickCalibration.y_offset);
+		joystickDriver();
+		
+		printf("-------------------------\n\r");
+		*/
+		_delay_ms(200);
+		
+
 	}
 	
 	return 0;

@@ -21,10 +21,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <string.h>
 #include <avr/pgmspace.h>
 
 #include "FONTS.h"
 #include "OLED.h"
+#include "JOYSTICK.h"
 
 
 static FILE mystdout = FDEV_SETUP_STREAM(OLEDPrint, NULL, _FDEV_SETUP_WRITE);				
@@ -32,6 +34,8 @@ static FILE myinvstdout = FDEV_SETUP_STREAM(OLEDinvertedPrint, NULL, _FDEV_SETUP
 
 volatile uint8_t* extOledCmd = (uint8_t*) OLED_COMMAND_ADDRESS;
 volatile uint8_t* extOledData = (uint8_t*) OLED_DATA_ADDRESS;
+
+extern OLEDposition_t OLEDpos = {0,0};
 
 void write_c(uint8_t command)
 {
@@ -65,6 +69,8 @@ void OLEDGotoColumn(uint8_t column)
 	}
 }
 
+//void OLEDUpdate
+
 void OLEDGotoPosition(uint8_t line, uint8_t column)
 {
 	OLEDGotoLine(line);
@@ -95,22 +101,50 @@ void OLEDClearAll()
 	}
 }
 
-void OLEDPrintf(char* data, ...){
+void OLEDPrintf(char* data, ...)
+{
 	va_list args;
+	uint8_t length;
 	va_start(args, data);
 	vfprintf(&mystdout, data, args);
-	va_end(args);	
+	length = strlen(data);
+	//printf("Length = %d\n\r", length);
+	va_end(args);
+	
+	// take the length of the string and loop through the columns to get the current column
+	for (int i=0; i<length*FONTSIZE;i++)
+	{
+		OLEDpos.column++;
+		if (OLEDpos.column == 128)
+		{
+			OLEDpos.column = 0;
+		}
+	}
 }
 
-void OLEDinvPrintf(char* data, ...){
+void OLEDinvPrintf(char* data, ...)
+{
 	va_list args;
+	//uint8_t length; // for getting the length of the string
 	va_start(args, data);
 	vfprintf(&myinvstdout, data, args);
+	//length = strlen(data);
 	va_end(args);
+	
+/*	// take the length of the string and loop through the columns to get the current column
+	for (int i=0; i<length*FONTSIZE;i++)
+	{
+		OLEDpos.column++;
+		if (OLEDpos.column == 128)
+		{
+			OLEDpos.column = 0;
+		}
+	}*/
 }
 
 
-int OLEDinvertedPrint(unsigned char c){
+int OLEDinvertedPrint(unsigned char c)
+{
 	uint8_t printChar = c-32;
 	
 	for (int i=0; i < FONTSIZE; i++) {
@@ -122,6 +156,29 @@ int OLEDinvertedPrint(unsigned char c){
 	return 0;
 }
 
+void OLEDprintArrowRight(void)
+{
+	write_d(0b00011000);
+	write_d(0b00011000);
+	write_d(0b00011000);
+	write_d(0b00011000);
+	write_d(0b01111110);
+	write_d(0b00111100);
+	write_d(0b00011000);	
+	write_d(0b00000000);
+}
+
+void OLEDprintArrowLeft(void)
+{
+	write_d(0b00000000);
+	write_d(0b00011000);
+	write_d(0b00111100);
+	write_d(0b01111110);
+	write_d(0b00011000);
+	write_d(0b00011000);
+	write_d(0b00011000);
+	write_d(0b00011000);
+}
 
 void OLEDInit(void)
 {
