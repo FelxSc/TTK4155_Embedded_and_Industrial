@@ -40,8 +40,8 @@ void menuInit( void )
 {
 	// Create a list of all the menu options in Main Menu
 	menu_t* mainMenu = createMenu("Main Menu", NULL);
-	menu_t* menu1 = createMenu("Menu 1", mainMenu);
-	menu_t* menu2 = createMenu("Menu 2", mainMenu);
+	menu_t* menu1 = createMenu("Menuu 1", mainMenu);
+	menu_t* menu2 = createMenu("Mennnnnu 2", mainMenu);
 	menu_t* menu3 = createMenu("Menu 3", mainMenu);
 	
 	// Create a list of all the menu options in Menu 1
@@ -101,15 +101,24 @@ void drawMenu(menu_t* menu)	// pointer to the selected function
 	while(menu != NULL)
 	{
 		line++;
-		OLEDGotoPosition(line,10);
-		OLEDPrintf(menu->title);
+		
+		if (line == currentLine)
+			{
+				OLEDGotoPosition(currentLine,2);
+				OLEDprintArrowRight();
+				//OLEDGotoPosition(currentLine,strlen(menu->title)*8);
+				OLEDinvPrintf(menu->title);
+				OLEDprintArrowLeft();
+			}
+		else
+			{
+				OLEDGotoPosition(line,10);
+				OLEDPrintf(menu->title);
+			}
 		menu = menu->rightSibling;
 	}
 	
-	OLEDGotoPosition(currentLine,2);
-	OLEDprintArrowRight();
-	OLEDGotoPosition(currentLine,menuWidth+9);
-	OLEDprintArrowLeft();
+	
 }
 
 
