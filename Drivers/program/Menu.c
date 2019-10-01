@@ -131,8 +131,8 @@ selectedMenu_t selectMenu()
 		case UP:
 			currentLine--;
 			if(currentLine <= 0)
-				currentLine = lengthOfMenu;		// change this... Make some form of counter to know hoe long the current menu is
-			drawMenu(currentMenu);
+				currentLine = lengthOfMenu;		
+			drawMenu(currentMenu);				
 			break;
 		case DOWN:
 			currentLine++;
@@ -148,10 +148,14 @@ selectedMenu_t selectMenu()
 			
 			break;
 		case RIGHT:
-			currentMenu = currentMenu->firstChild;
-			for(int i = 1; i < currentLine; i++)
+			if (currentMenu->firstChild != NULL)
+			{
+				currentMenu = currentMenu->firstChild;
+				for(int i = 1; i < currentLine; i++)
 				currentMenu = currentMenu->rightSibling;
-			drawMenu(currentMenu);
+				drawMenu(currentMenu);
+			}
+
 			
 			break;
 		default:
