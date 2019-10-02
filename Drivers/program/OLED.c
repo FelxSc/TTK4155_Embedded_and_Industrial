@@ -104,22 +104,21 @@ void OLEDClearAll()
 void OLEDPrintf(char* data, ...)
 {
 	va_list args;
-	uint8_t length;
+	//uint8_t length;	// for getting the length of the string
 	va_start(args, data);
 	vfprintf(&mystdout, data, args);
-	length = strlen(data);
-	//printf("Length = %d\n\r", length);
+	//length = strlen(data);
 	va_end(args);
 	
 	// take the length of the string and loop through the columns to get the current column
-	for (int i=0; i<length*FONTSIZE;i++)
+/*	for (int i=0; i<length*FONTSIZE;i++)
 	{
 		OLEDpos.column++;
 		if (OLEDpos.column == 128)
 		{
 			OLEDpos.column = 0;
 		}
-	}
+	}*/
 }
 
 void OLEDinvPrintf(char* data, ...)

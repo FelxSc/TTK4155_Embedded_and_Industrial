@@ -22,6 +22,8 @@
 #include "Menu.h"
 #include "USART.h"
 #include "JOYSTICK.h"
+#include "SPI.h"
+#include "MCP2515.h"
 
 
 void ExernalMemoryInit( void )
@@ -39,17 +41,24 @@ int main()
 	ExernalMemoryInit();
 	adcInit();
 	OLEDInit();
+	SPI_MasterInit();
 	
 	//joystickCalibrate();
 	
 	menuInit();
 	
 	
+	void MCP2515_reset();
+
+	//init loopback for testing purposes	
+	MCP2515_Write(MCP_CANCTRL,MODE_LOOPBACK);
+	
+	uint8_t status, dataReceive, dataSend = 1;
 	
 	while(1)
 	{
 		
-		int selectedMenu = selectMenu();
+		//int selectedMenu = selectMenu();
 		//int num = (int) selectedMenu;
 		
 		//printf("-%d-", selectedMenu);
@@ -61,8 +70,33 @@ int main()
 		
 		printf("-------------------------\n\r");
 		*/
-		_delay_ms(200);
+
+		// Read RX status register
+		status = MCP2515_readRXstatus();
+		printf("RX status : %x\n\r",status);
 		
+		status = MCP2515_readStatus(MCP_CANSTAT);
+		printf("CANSTAT : %x\n\r",status);
+		
+		// Status of buffers
+		status = MCP2515_readRxTxStatus();
+		printf("MCP2515 status: %x\n\n\r", status);
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+		
+		
+		
+		
+		
+		
+		MCP2515_Write(MCP_LOAD_TX0, dataSend );
+		dataReceive = MCP2515_Read(MCP_READ_RX1);
+		printf("DataReceive : %d\n\n\r", dataReceive);
+		dataSend++;
+
+		_delay_ms(200);
 
 	}
 	
