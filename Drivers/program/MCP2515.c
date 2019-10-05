@@ -28,7 +28,7 @@ uint8_t MCP2515_Read(uint8_t adr)
 }
 
 
-void MCP2515_Write(char adr, char data)
+void MCP2515_Write(char adr, uint8_t data)
 {
 	SPI_SlaveSelect();
 
@@ -52,7 +52,9 @@ void MCP2515_cmd(char cmd)
 void MCP2515_reset( void )
 {
 	SPI_SlaveSelect();
+	
 	SPI_write(MCP_RESET);
+	
 	SPI_SlaveDeselect();
 }
 
@@ -96,7 +98,7 @@ uint8_t MCP2515_readStatus(uint8_t reg)
 {
 	uint8_t status = 0;
 	SPI_SlaveSelect();
-	SPI_write(MCP_WRITE);
+	SPI_write(MCP_READ);
 	SPI_write(reg);
 	
 	status = SPI_read();
@@ -115,3 +117,55 @@ void MCP2515_bitMask(uint8_t reg, uint8_t bitMask, uint8_t data)
 	SPI_write(data);
 	SPI_SlaveDeselect();
 }
+
+void MCP2515init( uint8_t MODE )
+{
+	uint8_t state;
+	void MCP2515_reset();
+
+	state = MCP2515_readStatus(MCP_CANSTAT);
+	printf("\n\nCANSTAT: %d\n\n\r", state);
+
+	MCP2515_Write(MCP_CANINTE, MCP_TX_INT);	// Enable all TX interrupts
+	MCP2515_Write(MCP_CANINTE, MCP_RX_INT); // Enable all RX interrupts
+	MCP2515_Write(MCP_CANCTRL,MODE); // Enable loopback mode for testing
+	
+	state = MCP2515_readStatus(MCP_CANSTAT);
+	printf("\n\nCANSTAT: %d\n\n\r", state);
+	
+}
+
+
+
+void CAN_Write(char adr, CAN_message_t* data)
+{
+	SPI_SlaveSelect();
+
+	SPI_write(MCP_WRITE);
+	SPI_write(adr);		// Send ADDRESS
+	SPI_write(data->ID);
+	SPI_write(data->length);
+	for(int i = 0; i < data->length; i++)
+	{
+		SPI_write(data->msg[i]);
+	}
+
+	SPI_SlaveDeselect();
+}
+
+
+uint8_t CAN_Read( void )
+{
+	uint8_t data = 0;
+	SPI_SlaveSelect();
+
+	SPI_write(MCP_READ);
+	SPI_write(MCP_READ_RX0);
+	
+	data = SPI_read();	// Receive data
+	
+	SPI_SlaveDeselect();
+	
+	return data;
+}
+

@@ -21,18 +21,32 @@ v1.00       2003/12/11  Initial release
 Copyright 2003 Kimberly Otten Software Consulting
 */
 
+#include <string.h>
+
+
+typedef struct {
+	unsigned int ID;
+	uint8_t length;
+	uint8_t msg[8];
+}CAN_message_t;
 
 void MCP2515_cmd(char cmd);
-void MCP2515_Write(char adr, char data);
+void MCP2515_Write(char adr, uint8_t data);
+void CAN_Write(char adr, CAN_message_t* data);
 void MCP2515_RTS(uint8_t TXn);
 
+uint8_t CAN_Read(void);
 uint8_t MCP2515_Read(uint8_t adr);
 uint8_t MCP2515_readRxTxStatus();
 uint8_t MCP2515_readRXstatus();
 uint8_t MCP2515_readStatus(uint8_t register);
 
+void MCP2515init( uint8_t );
 void MCP2515_reset( void );
 void MCP2515_bitMask(uint8_t reg, uint8_t bitMask, uint8_t data);
+
+
+
 
 // Define MCP2515 register addresses
 
@@ -83,8 +97,16 @@ void MCP2515_bitMask(uint8_t reg, uint8_t bitMask, uint8_t data);
 #define MCP_TXB2CTRL	0x50
 #define MCP_RXB0CTRL	0x60
 #define MCP_RXB0SIDH	0x61
+#define MCP_RXB0SIDL	0x62
 #define MCP_RXB1CTRL	0x70
 #define MCP_RXB1SIDH	0x71
+#define MCP_RXB1SIDL	0x72
+#define MCP_RXB0DLC		0x65
+#define MCP_RXB1DLC		0x75
+#define MCP_RXB0DM		0x66
+#define MCP_RXB1DM		0x76
+
+
 
 
 #define MCP_TX_INT		0x1C		// Enable all transmit interrupts
@@ -94,6 +116,23 @@ void MCP2515_bitMask(uint8_t reg, uint8_t bitMask, uint8_t data);
 
 #define MCP_TX01_MASK	0x14
 #define MCP_TX_MASK		0x54
+
+// Transmitt buffer adresse
+
+#define MCP_TXB0SIDH	0x31
+#define MCP_TXB0SIDL	0x32
+#define MCP_TXB1SIDH	0x41
+#define MCP_TXB0SIDL	0x42
+#define MCP_TXB2SIDH	0x51
+#define MCP_TXB0SIDL	0x52
+
+#define MCP_TXB0DLC		0x35
+#define MCP_TXB1DLC		0x45
+#define MCP_TXB2DLC		0x55
+
+#define MCP_TXB0Dm		0x36
+#define MCP_TXB1Dm		0x46
+#define MCP_TXB2Dm		0x56
 
 // Define SPI Instruction Set
 
