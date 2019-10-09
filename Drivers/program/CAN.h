@@ -10,7 +10,7 @@
 #define CAN_H_
 
 void sendCANmessage(CAN_message_t* data);
-void receiveCANmesssage( CAN_message_t* data );
+void receiveCANmesssage( CAN_message_t* data, uint8_t reg );
 
 
 

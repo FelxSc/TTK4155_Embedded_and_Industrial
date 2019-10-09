@@ -9,14 +9,21 @@
 #include <util/delay.h>
 #include "MCP2515.h"
 
-
+	uint8_t messageCount = 0x00;
 
 void sendCANmessage(CAN_message_t* data)
 {
-	uint8_t IDlow, IDhigh;
-	
+	uint8_t IDlow, IDhigh, status, TXBnBase;
 
-	//MCP2515_bitMask(MCP_TXB0CTRL, 0x08, 0x00); // Check if this is correct.......!!
+	if(messageCount > 2)
+		messageCount = 0x00;	// Counter to specify the TX buffer to write the message to.
+	TXBnBase = 0x30 + messageCount << 4;	// Create base address in order to change buffer. TXB0CTRL + messageCount shifted left 4 times creates base address for each of the three TX buffers
+	status = MCP2515_readStatus(TXBnBase);
+	printf("\n\rMessageCount: %d\n\r", messageCount);
+	printf("TX status: %x\n\n\r", status);
+	
+	while ( (status & 0x08) ) printf("Waiting for TX buffer -%d- to be transmitted %d\n\r", messageCount);
+	
 	
 	uint16_t ID = data->ID;
 	IDhigh = ID >> 3;		// Right shift by 3 to make 8 most significant bits of the 11 bits ID
@@ -25,28 +32,37 @@ void sendCANmessage(CAN_message_t* data)
 	
 	
 	_delay_ms(1);
-	MCP2515_Write(MCP_TXB0SIDH, IDhigh);
-	MCP2515_Write(MCP_TXB0SIDL, IDlow);
+	MCP2515_Write(TXBnBase + 0x01, IDhigh);	// TXBnBASE + offset = MCP_TXBnSIDH
+	MCP2515_Write(TXBnBase + 0x02, IDlow);	// TXBnBASE + offset = MCP_TXBnSIDL
 	_delay_ms(10);
-	printf("IDhigh read-for-send: %x\n\r", MCP2515_Read(MCP_TXB0SIDH));
-	printf("IDlow read-for-send: %x\n\r", MCP2515_Read(MCP_TXB0SIDL));
+	printf("IDhigh read-for-send: %x\n\r", MCP2515_Read(TXBnBase + 0x01));
+	printf("IDlow read-for-send: %x\n\r", MCP2515_Read(TXBnBase + 0x02));
 	
 	
 
 	
-	MCP2515_Write(MCP_TXB0DLC, data->length);
+	MCP2515_Write(TXBnBase + 0x05, data->length);	// TXBnBASE + offset = MCP_TXBnDLC
 	
-	for(uint8_t i = 0; i < data->length; i++)
+	for(uint8_t byte = 0; byte < data->length; byte++)
 	{
-		MCP2515_Write(MCP_TXB0Dm+i, data->msg[i]);
+		MCP2515_Write(TXBnBase + 0x06+byte, data->msg[byte]);	// TXBnBASE + offset = MCP_TXBnDm
+	}
+	switch(messageCount)
+	{
+		case 0: MCP2515_RTS(MCP_RTS_TX0); break;	// Request to send TXB0
+		case 1: MCP2515_RTS(MCP_RTS_TX1); break;	// Request to send TXB1
+		case 2: MCP2515_RTS(MCP_RTS_TX2); break;	// Request to send TXB2
+		default: break;
 	}
 	
+	messageCount++;
+	
 	// Request to send
-	MCP2515_RTS(MCP_RTS_TX0);
+	//MCP2515_RTS(MCP_RTS_TX0);
 	//MCP2515_bitMask(MCP_TXB0CTRL, 0x08, 0x08);
 }
 
-void receiveCANmesssage( CAN_message_t* data )
+void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 {
 					printf("IDhigh Just before receive: %x\n\r", MCP2515_Read(MCP_RXB0SIDH));
 					printf("IDlow just before receive: %x\n\r", MCP2515_Read(MCP_RXB0SIDL));
@@ -54,8 +70,8 @@ void receiveCANmesssage( CAN_message_t* data )
 	
 	uint8_t IDlow, IDhigh, data_length_code;
 
-	IDhigh = MCP2515_Read(MCP_RXB0SIDH);	
-	IDlow = MCP2515_Read(MCP_RXB0SIDL);
+	IDhigh = MCP2515_Read(reg+0x01);	// RXBnBASE + offset = RXBnSIDH
+	IDlow = MCP2515_Read(reg+0x02);		// RXBnBASE + offset = RXBnSIDL
 	
 	printf("\n\rIDhigh received: %x\n\r", IDhigh);
 	printf("IDlow received: %x\n\r", IDlow);
@@ -75,12 +91,12 @@ void receiveCANmesssage( CAN_message_t* data )
 	data->ID = data->ID << 3;
 	data->ID = 0xe0 & IDlow;
 	*/
-	data_length_code = MCP2515_Read(MCP_RXB0DLC);
+	data_length_code = MCP2515_Read(reg+0x05);	// RXBnBASE + offset = MCP_RXBnDLC
 	data->length = data_length_code & 0b1111;
 	
-	for(uint8_t i = 0; i < data->length; i++)
+	for(uint8_t byte = 0; byte < data->length; byte++)
 	{
-		data->msg[i] = MCP2515_Read(MCP_RXB0DM+i);
+		data->msg[byte] = MCP2515_Read(reg+0x06+byte);	// RXBnBASE + offset = MCP_RXBnDm
 	}
 	
 }
