@@ -25,7 +25,7 @@ Copyright 2003 Kimberly Otten Software Consulting
 
 
 typedef struct {
-	unsigned int ID;
+	uint16_t ID;
 	uint8_t length;
 	uint8_t msg[8];
 }CAN_message_t;

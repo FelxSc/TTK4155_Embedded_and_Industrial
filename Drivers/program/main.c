@@ -74,7 +74,7 @@ int main()
 	menuInit();
 	SPI_MasterInit();
 	
-	
+	printf("Initialization of MCP2515...\n\r");
 	MCP2515init(MODE_LOOPBACK);	
 	//joystickCalibrate();
 	
@@ -82,22 +82,24 @@ int main()
 	
 	
 	uint8_t status, dataReceive, dataSend = 1;
-	CAN_message_t data,data1, receivedCAN;
+	CAN_message_t data,data1, receivedCAN, receivedCAN1;
 	
-	data.ID = 2;
+	data.ID = 10;
 	data.msg[0] = 'H';
-	data.msg[1] = 'e';
-	data.msg[2] = 'i';
+	data.msg[1] = 'a';
+	data.msg[2] = 'd';
 	data.length = strlen(data.msg);
 	
-	data1.ID = 1;
-	data1.msg[0] = 'V';
-	data1.msg[1] = 'e';
-	data1.msg[2] = 'r';
-	data1.msg[3] = 'd';
-	data1.msg[4] = 'e';
-	data1.msg[5] = 'n';
-	data1.length = strlen(data.msg);
+	data1.ID = 20;
+	data1.msg[0] = '1';
+	data1.msg[1] = '2';
+	data1.msg[2] = '3';
+	data1.msg[3] = '5';
+	data1.msg[4] = '5';
+	data1.msg[5] = '6';
+	data1.msg[6] = '7';	
+	//data1.msg[7] = '8';
+	data1.length = strlen(data1.msg);
 
 	
 	while(1)
@@ -117,26 +119,157 @@ int main()
 		*/
 		
 		
-		sendCANmessage(&data);
-		//sendCANmessage(&data1);
 		
-		status = MCP2515_readStatus(MCP_TXB0CTRL);
-		printf("TXB0CTRL: %x",status);
 		
-		receiveCANmesssage(&receivedCAN);
 		
-		MCP2515_bitMask(MCP_TXB0CTRL,0x08, 0);
 		
-		status = MCP2515_readStatus(MCP_TXB0CTRL);
-		printf("TXB0CTRL: %x",status);
+/*	
+		// Test - Send MSG data
 		
-		printf("\n\n\rSENDING MSG\n\r");
+		printf("\n\n\rSENDING MSG: data\n\r");
 
 		// CAN struct test
 		printf("ID: %d\n\r",data.ID);
 		printf("msg: %s\n\r", data.msg);
 		printf("msgLen: %d\n\r",data.length);
-/*
+		
+		
+		// Send MSG data
+		sendCANmessage(&data);
+		
+		// Read status register for TX0
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("TXB0CTRL: %x",status);
+		
+		
+		
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+		
+		// clear interrupt register
+		MCP2515_bitMask(MCP_CANINTF, 0xff, 0x00);
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+		
+		
+		
+		
+		
+		_delay_ms(1000);
+		
+		// Test receive MSG receivedCAN
+
+		printf("\n\n\rRECEIVING MSG -receivedCAN-\n\r");
+		receiveCANmesssage(&receivedCAN);
+
+
+
+
+		printf("ID: %d\n\r",receivedCAN.ID);
+		printf("msg: %s\n\r", receivedCAN.msg);
+		printf("msgLen: %d\n\r",receivedCAN.length);
+		
+		// Read status reg
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("TXB0CTRL: %x",status);
+		
+		
+		
+		
+		
+				
+				
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+				
+		// clear interrupt register
+		MCP2515_bitMask(MCP_CANINTF, 0xff, 0x00);
+				
+				
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+		
+		
+*/		
+		
+		
+		// Test send MSG data1
+
+		printf("\n\n\r************SENDING MSG: data1 *************\n\r");
+
+		// CAN struct test
+		printf("ID: %d\n\r",data1.ID);
+		printf("msg: %s\n\r", data1.msg);
+		printf("msgLen: %d\n\r",data1.length);
+		
+		// Send MSG data1
+		sendCANmessage(&data1);
+				printf("IDhigh Just sent: %x\n\r", MCP2515_Read(MCP_TXB0SIDH));
+				printf("IDlow just sent: %x\n\r", MCP2515_Read(MCP_TXB0SIDL));
+
+		// Read status
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("TXB0CTRL: %x\n\r",status);
+
+
+
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\r", status);
+		
+		// clear interrupt register
+		MCP2515_bitMask(MCP_CANINTF, 0xff, 0x00);
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF cleared : %x\n\r", status);
+		
+
+		_delay_ms(1000);
+
+
+		// Test receivedCAN1
+		printf("\n\n\r********RECEIVING MSG -receivedCAN1- ***********\n\r");
+
+		receiveCANmesssage(&receivedCAN1);
+	
+
+
+		printf("ID: %d\n\r",receivedCAN1.ID);
+		printf("msg: %s\n\r", receivedCAN1.msg);
+		printf("msgLen: %d\n\r",receivedCAN1.length);
+
+
+
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\r", status);
+		
+		// clear interrupt register
+		MCP2515_bitMask(MCP_CANINTF, 0xff, 0x00);
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF cleared: %x\n\r", status);
+
+
+
+
+
+
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("\n\n\rTXB0CTRL: %x\n\r",status);
+
 		// Read RX status register
 		status = MCP2515_readRXstatus();
 		printf("RX status : %x\n\r",status);
@@ -146,24 +279,19 @@ int main()
 		
 		// Status of buffers
 		status = MCP2515_readRxTxStatus();
-		printf("MCP2515 status: %x\n\n\r", status);
-		*/
+		printf("MCP2515 status: %x\n\r", status);
+		
 		// Read CAN interrupt status register
 		status = MCP2515_Read(MCP_CANINTF);
-		printf("CANINTF : %x\n\n\r", status);
+		printf("CANINTF : %x\n\r", status);
+		
+
+		_delay_ms(1000);
 		
 		
 		
 		
 		
-		
-		
-		
-		printf("\n\n\rRECEIVING MSG\n\r");
-		
-		printf("ID: %d\n\r",receivedCAN.ID);
-		printf("msg: %s\n\r", receivedCAN.msg);
-		printf("msgLen: %d\n\r",receivedCAN.length);
 		
 		//CAN_Write(0x36, &data );
 		//CAN_Write(MCP_LOAD_TX0, &data1 );
@@ -176,7 +304,7 @@ int main()
 
 		*/
 		
-		if(CAN_interrupt == 1)
+/*		if(CAN_interrupt == 1)
 		{
 			CAN_interrupt = 0;
 			printf("CAN Interrupt");
@@ -190,9 +318,9 @@ int main()
 			
 			_delay_ms(1000);
 		}
-		
+		*/	
 		_delay_ms(200);
 	}
-	
+
 	return 0;
 }
