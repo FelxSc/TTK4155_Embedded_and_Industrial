@@ -3,6 +3,7 @@
 //#endif
 
 #include <avr/io.h>
+#include <string.h>
 #include <avr/common.h>
 #include <avr/builtins.h>
 #include <avr/interrupt.h>
@@ -22,7 +23,33 @@
 #include "Menu.h"
 #include "USART.h"
 #include "JOYSTICK.h"
+#include "SPI.h"
+#include "MCP2515.h"
+#include "CAN.h"
 
+
+volatile int CAN_interrupt = 0;
+
+
+
+
+void InterruptInit( void )
+{
+	DDRD &= ~(1<<PD2);
+	
+	cli();
+	
+	// Interrupt on falling edge
+	MCUCR &= ~(1<<ISC00);
+	MCUCR |= (1<<ISC01);
+
+	
+	// Enable Interrupt on PD2
+	GICR |= (1<<INT0);
+	
+	// Enable global interrupts
+	sei();
+}
 
 void ExernalMemoryInit( void )
 {
@@ -31,25 +58,237 @@ void ExernalMemoryInit( void )
 	
 }
 
-int main()
+
+
+CAN_message_t handleCANInterrupt()
 {
+	CAN_interrupt = 0;
+	printf("\n\nr\rCAN Interrupt");
+	
+	CAN_message_t receivedCAN1;
+	
+	//CAN_message_t * receivedCAN1 = malloc(sizeof(CAN_message_t));
+	//CAN_message_t * receivedCAN2 = malloc(sizeof(CAN_message_t));
+	
+	//receivedCAN1 = received1;
+	//receivedCAN2 = received2;
+	uint8_t status;
+	
+	// Interrupt status
+	status = MCP2515_Read(MCP_CANINTF);
+	printf("\n\rCANINTF : %x\n\n\r", status);
+	
+	
+	receiveCANmesssage(&receivedCAN1, 0x60);
+	
+	return receivedCAN1;
+	
+	
+	
+	/*
+	switch(status & 0x03){			// Check for Interrupt ERROR (Right now ERROR check is disabled 0xa3) and RXBn
+		case 1: receiveCANmesssage(&receivedCAN1, 0x60);	// Receive RXB0
+		printf("ID: %d\n\r",receivedCAN1->ID);
+		printf("msg: %s\n\r", receivedCAN1->msg);
+		printf("msgLen: %d\n\r",receivedCAN1->length);
+		break;
+		
+		case 2: receiveCANmesssage(&receivedCAN2, 0x70);	// Receive RXB1
+		printf("ID: %d\n\r",receivedCAN2->ID);
+		printf("msg: %s\n\r", receivedCAN2->msg);
+		printf("msgLen: %d\n\r",receivedCAN2->length);
+		break;
+		case 3: receiveCANmesssage(&receivedCAN1, 0x60);	// Receive RXB0
+		receiveCANmesssage(&receivedCAN2, 0x70);	// Receive RXB1
+		printf("ID: %d\n\r",receivedCAN1->ID);
+		printf("msg: %s\n\r", receivedCAN1->msg);
+		printf("msgLen: %d\n\r",receivedCAN1->length);
+		
+		printf("ID: %d\n\r",receivedCAN2->ID);
+		printf("msg: %s\n\r", receivedCAN2->msg);
+		printf("msgLen: %d\n\r",receivedCAN2->length);
+		break;
+		default: printf("ERROR!! Received message with error\n\r");
+		printf("What do you want to do about this???\n\r");
+		printf("ELFG: %x\n\r", MCP2515_readStatus(MCP_EFLG));
+		MCP2515_bitMask(MCP_CANINTF, 0xa0, 0x00);
+		break;
+	}*/
+	
+	
+	// clear interrupt register
+	//MCP2515_bitMask(MCP_CANINTF, 0x03, 0x00);
+}	// End of switch-Case
+
+
+ISR(INT0_vect)
+{
+	CAN_interrupt = 1;
+
+}
+
+void main()
+{
+	
 // ----- Initialization ----- //
 	USART_Init( MYUBRR );
 	fdevopen(&USART_Transmit, &USART_Receive);
+	InterruptInit();
 	ExernalMemoryInit();
 	adcInit();
 	OLEDInit();
+	menuInit();
+	SPI_MasterInit();
 	
+	printf("Initialization of MCP2515...\n\r");
+	MCP2515init(MODE_LOOPBACK);	
 	//joystickCalibrate();
 	
-	menuInit();
+
 	
 	
+	uint8_t status, dataReceive, dataSend = 1;
 	
+	CAN_message_t data, data1, data2, data3, receiveCAN1;
+	
+	data.ID = 55;
+	data.msg[0] = '1';
+	data.msg[1] = '2';
+	data.msg[2] = '3';
+	data.msg[3] = '0';	
+	data.msg[4] = 'e';
+	data.msg[5] = 'n';
+	data.msg[6] = 'd';
+	data.msg[7] = '\0';
+	data.length = 8;
+	
+
+	
+	data1.ID = 20;
+	data1.msg[0] = 'b';
+	data1.msg[1] = 'e';
+	data1.msg[2] = 'r';
+	data1.msg[3] = 'c';
+	data1.msg[4] = 'e';
+	data1.msg[5] = 'n';
+	data1.msg[6] = 'd';	
+	data1.msg[7] = '\0';
+	data1.length = 8;
+	/*
+	data2->ID = 21;
+	data2->msg[0] = '1';
+	data2->msg[1] = '2';
+	data2->msg[2] = '3';
+	data2->msg[3] = '5';
+	data2->msg[4] = '5';
+	data2->msg[5] = '6';
+	data2->msg[6] = '7';
+	data2->msg[7] = '\0';
+	data2->length = 8;
+	
+	
+	data3->ID = 14;
+	data3->msg[0] = 'H';
+	data3->msg[1] = 'a';
+	data3->msg[2] = 'd';
+	data3->msg[3] = 'e';
+	data3->msg[4] = ' ';
+	data3->msg[5] = 'b';
+	data3->msg[6] = 'r';
+	data3->msg[7] = '\0';
+	data3->length = 8;
+*/
+	
+	int c = 0;
+			
 	while(1)
 	{
 		
-		int selectedMenu = selectMenu();
+		c++;
+		printf("one");	
+		
+		if(CAN_interrupt == 1){
+			receiveCAN1 = handleCANInterrupt();
+			
+			printf("back from handleCANInterrupt\n\r");
+			printf("ID: %d\n\r",receiveCAN1.ID);
+			printf("msg: %s\n\r", receiveCAN1.msg);
+			printf("msgLen: %d\n\r",receiveCAN1.length);
+		}
+		printf("two");
+		
+		
+		printf("\n\n\r************SENDING MSG: data *************\n\r");
+
+		// CAN struct test
+		printf("ID: %d\n\r",data.ID);
+		printf("msg: %s\n\r", data.msg);
+		printf("msgLen: %d\n\r",data.length);
+		sendCANmessage(&data);
+		
+		
+		
+		printf("\n\n\r************SENDING MSG: data1 *************\n\r");
+
+		// CAN struct test
+		printf("ID: %d\n\r",data1.ID);
+		printf("msg: %s\n\r", data1.msg);
+		printf("msgLen: %d\n\r",data1.length);
+		sendCANmessage(&data1);
+		
+		
+		/*for(int i = 0; i <= 3; i++)
+		{
+			if(CAN_interrupt == 1)
+				handleCANInterrupt(&receivedCAN1,&receivedCAN2);
+				
+			switch (i)
+			{
+				case 0: 
+				printf("\n\n\r************SENDING MSG: data *************\n\r");
+
+				// CAN struct test
+				printf("ID: %d\n\r",data->ID);
+				printf("msg: %s\n\r", data->msg);
+				printf("msgLen: %d\n\r",data->length);
+				sendCANmessage(data);
+				break;
+				case 1: 
+				printf("\n\n\r************SENDING MSG: data1 *************\n\r");
+
+				// CAN struct test
+				printf("ID: %d\n\r",data1->ID);
+				printf("msg: %s\n\r", data1->msg);
+				printf("msgLen: %d\n\r",data1->length);
+				sendCANmessage(data1);
+				break;
+				case 2: 
+				printf("\n\n\r************SENDING MSG: data2 *************\n\r");
+
+				// CAN struct test
+				printf("ID: %d\n\r",data2->ID);
+				printf("msg: %s\n\r", data2->msg);
+				printf("msgLen: %d\n\r",data2->length);
+				sendCANmessage(data2);
+				break;
+				case 3: 
+				printf("\n\n\r************SENDING MSG: data3 *************\n\r");
+
+				// CAN struct test
+				printf("ID: %d\n\r",data3->ID);
+				printf("msg: %s\n\r", data3->msg);
+				printf("msgLen: %d\n\r",data3->length);
+				sendCANmessage(data3); 
+				break;
+				default: break;
+
+			}
+			
+			_delay_ms(1);
+		}*/
+		
+		
+		//int selectedMenu = selectMenu();
 		//int num = (int) selectedMenu;
 		
 		//printf("-%d-", selectedMenu);
@@ -61,10 +300,199 @@ int main()
 		
 		printf("-------------------------\n\r");
 		*/
-		_delay_ms(200);
+		
+		
+		
+		
+		
+		
+/*	
+		// Test - Send MSG data
+		
+		printf("\n\n\rSENDING MSG: data\n\r");
+
+		// CAN struct test
+		printf("ID: %d\n\r",data.ID);
+		printf("msg: %s\n\r", data.msg);
+		printf("msgLen: %d\n\r",data.length);
+		
+		
+		// Send MSG data
+		sendCANmessage(&data);
+		
+		// Read status register for TX0
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("TXB0CTRL: %x",status);
+		
+		
+		
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+		
+		// clear interrupt register
+		MCP2515_bitMask(MCP_CANINTF, 0xff, 0x00);
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+		
+		
+		
+		
+		
+		_delay_ms(1000);
+		
+		// Test receive MSG receivedCAN
+
+		printf("\n\n\rRECEIVING MSG -receivedCAN-\n\r");
+		receiveCANmesssage(&receivedCAN);
+
+
+
+
+		printf("ID: %d\n\r",receivedCAN.ID);
+		printf("msg: %s\n\r", receivedCAN.msg);
+		printf("msgLen: %d\n\r",receivedCAN.length);
+		
+		// Read status reg
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("TXB0CTRL: %x",status);
+		
+		
+		
+		
+		
+				
+				
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+				
+		// clear interrupt register
+		MCP2515_bitMask(MCP_CANINTF, 0xff, 0x00);
+				
+				
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\n\r", status);
+		
+		
+*/		
+		
+		
+		// Test send MSG data1
+/*
+		printf("\n\n\r************SENDING MSG: data1 *************\n\r");
+
+		// CAN struct test
+		printf("ID: %d\n\r",data1.ID);
+		printf("msg: %s\n\r", data1.msg);
+		printf("msgLen: %d\n\r",data1.length);
+		
+		// Send MSG data1
+		sendCANmessage(&data1);
+				printf("IDhigh Just sent: %x\n\r", MCP2515_Read(MCP_TXB0SIDH));
+				printf("IDlow just sent: %x\n\r", MCP2515_Read(MCP_TXB0SIDL));
+
+		// Read status
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("TXB0CTRL: %x\n\r",status);
+
+
+
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\r", status);
 		
 
-	}
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF cleared : %x\n\r", status);
+		
+
+		_delay_ms(1000);
+*/
+/*
+		// Test receivedCAN1
+		printf("\n\n\r********RECEIVING MSG -receivedCAN1- ***********\n\r");
+
+		receiveCANmesssage(&receivedCAN1);
 	
-	return 0;
+
+
+		printf("ID: %d\n\r",receivedCAN1.ID);
+		printf("msg: %s\n\r", receivedCAN1.msg);
+		printf("msgLen: %d\n\r",receivedCAN1.length);
+
+
+
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\r", status);
+		
+		// clear interrupt register
+		MCP2515_bitMask(MCP_CANINTF, 0xff, 0x00);
+		
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF cleared: %x\n\r", status);
+
+
+
+
+
+
+		status = MCP2515_readStatus(MCP_TXB0CTRL);
+		printf("\n\n\rTXB0CTRL: %x\n\r",status);
+
+		// Read RX status register
+		status = MCP2515_readRXstatus();
+		printf("RX status : %x\n\r",status);
+		
+		status = MCP2515_readStatus(MCP_CANSTAT);
+		printf("CANSTAT : %x\n\r",status);
+		
+		// Status of buffers
+		status = MCP2515_readRxTxStatus();
+		printf("MCP2515 status: %x\n\r", status);
+		
+		// Read CAN interrupt status register
+		status = MCP2515_Read(MCP_CANINTF);
+		printf("CANINTF : %x\n\r", status);
+		
+
+		_delay_ms(1000);
+		
+		*/
+		
+		
+		
+		
+		//CAN_Write(0x36, &data );
+		//CAN_Write(MCP_LOAD_TX0, &data1 );
+		//dataReceive = CAN_Read();
+		//printf("DataReceive : %c\n\n\r", dataReceive);
+		/*dataReceive = MCP2515_Read(MCP_READ_RX0);
+		printf("DataReceive : %c\n\n\r", dataReceive);
+		dataReceive = MCP2515_Read(MCP_READ_RX1);
+		printf("DataReceive : %c\n\n\r", dataReceive);
+
+		*/
+		
+		
+		
+		printf("CCCC: %d",c);
+			
+		_delay_ms(200);
+		printf("one");	
+	}
+	printf("there");
+	//return 0;
 }
