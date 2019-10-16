@@ -1,5 +1,6 @@
 #include "SPI.h"
 #include <avr/io.h>
+#include <stdio.h>
 
 
 
@@ -12,9 +13,9 @@ void SPI_MasterInit(void)
 }
 
 
-char SPI_MasterTransceive(char sendData)
+uint8_t SPI_MasterTransceive(uint8_t sendData)
 {
-	char receiveData;
+	uint8_t receiveData;
 	
 	/* Start transmission */
 	SPDR = sendData;
@@ -28,7 +29,7 @@ char SPI_MasterTransceive(char sendData)
 }
 
 
-void SPI_write(char Data)
+void SPI_write(uint8_t Data)
 {
 	/* Start transmission */
 	SPDR = Data;
@@ -36,7 +37,7 @@ void SPI_write(char Data)
 	loop_until_bit_is_set(SPSR, SPIF);
 }
 
-char SPI_read(void)
+uint8_t SPI_read(void)
 {
 
 	SPDR = 0x01;

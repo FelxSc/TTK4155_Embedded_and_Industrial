@@ -19,8 +19,8 @@
 
 
 
-extern joystick_data_t joystickCalibration;
-extern joystick_data_t joystick_data;
+//extern joystick_data_t joystickCalibration;
+//extern joystick_data_t joystick_data;
 
 
 void sliderDriver()
@@ -76,14 +76,12 @@ void joystickCalibrate( void )
 
 void joystickDriver()
 {
-	uint8_t x_axis;
-	uint8_t y_axis;
-	x_axis = getADCdata(CHANNEL4); //X axis on channel 4
-	y_axis = getADCdata(CHANNEL3); //Y axis on channel 3
+	joystick_data.x_position = getADCdata(CHANNEL4); //X axis on channel 4
+	joystick_data.y_position = getADCdata(CHANNEL3); //Y axis on channel 3
 	
 	
 	//joystick_direction_t joyst_direction; //The value should be: CENTER/LEFT/RIGHT/DOWN/UP
-	joystick_data.joystickPosition = get_joystick_direction(x_axis, y_axis);
+	joystick_data.joystickPosition = get_joystick_direction(joystick_data.x_position, joystick_data.y_position);
 	
 	
 	switch(joystick_data.joystickPosition){
@@ -106,6 +104,6 @@ void joystickDriver()
 		printf("The function get_joystick_direction is not returning one of these: CENTER/LEFT/RIGHT/DOWN/UP\n\r");
 		
 	}
-	printf("Joystick X = %d \n\r", x_axis);
-	printf("Joystick Y = %d \n\r", y_axis);
+	printf("Joystick X = %d \n\r", joystick_data.x_position);
+	printf("Joystick Y = %d \n\r", joystick_data.y_position);
 }
