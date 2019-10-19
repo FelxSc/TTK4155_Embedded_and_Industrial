@@ -49,7 +49,7 @@ void setDutyCycle( uint8_t count )
 
 uint8_t calculateDutyCycleCounter( uint8_t number )
 {
-	printf("x: %d",number);
+	//printf("x: %d",number);
 	float floatingnumber = number;
 	uint8_t cycleCounts = (uint8_t)(floatingnumber/3.44) + 57;
 	return cycleCounts;

@@ -27,6 +27,7 @@
 #include "MCP2515.h"
 #include "CAN.h"
 #include "SERVO.h"
+#include "ADC.h"
 
 
 volatile int CAN_interrupt = 0;
@@ -53,7 +54,7 @@ void InterruptInit( void )
 CAN_message_t handleCANInterrupt()
 {
 	CAN_interrupt = 0;
-	printf("\n\nr\rCAN Interrupt");
+	//printf("\n\nr\rCAN Interrupt");
 	
 	CAN_message_t receivedCAN1;
 	
@@ -61,7 +62,7 @@ CAN_message_t handleCANInterrupt()
 	
 	// Interrupt status
 	status = MCP2515_Read(MCP_CANINTF);
-	printf("\n\rCANINTF : %x\n\n\r", status);
+	//printf("\n\rCANINTF : %x\n\n\r", status);
 	
 	
 	receiveCANmesssage(&receivedCAN1, 0x60);
@@ -75,9 +76,10 @@ CAN_message_t handleCANInterrupt()
 	 	printf("\n\n\r************SENDING MSG: data *************\n\r");
 
 	 	// CAN struct test
-	 	printf("ID: %d\n\r",data.ID);
+	 	/*printf("ID: %d\n\r",data.ID);
 	 	printf("msg: %s\n\r", data.msg);
 	 	printf("msgLen: %d\n\r",data.length);
+		 */
 	 	sendCANmessage(&data);
  }
 
@@ -89,6 +91,24 @@ ISR(INT3_vect)
 
 ISR(TIMER1_OVF_vect)
 {
+	
+}
+
+void IR(void)
+{
+	uint16_t ir = 0;
+	uint8_t score;
+	for(int i = 0; i<2;i++)
+		ir = ir + readADC();
+		
+	ir = ir/3;
+	
+	if(ir <= 250 )
+	{
+		score++;
+	}
+	
+	
 	
 }
 
@@ -105,6 +125,7 @@ int main()
 	//menuInit();
 	SPI_MasterInit();
 	ServoTimer1Init();
+	ADCinit();
 
 	
 	printf("Initialization of MCP2515...\n\r");
@@ -120,32 +141,17 @@ int main()
 	
 	while(1)
 	{
-		
+		uint16_t data = readADC();
 				
-		if(CAN_interrupt == 1){
+		/*if(CAN_interrupt == 1){
 			receivedCAN = handleCANInterrupt();
-			//switch(receivedCAN.ID)
-			//{
-				/*case 1:	{*/ joystick_data = receivedCAN;// break; }
-				//default: printf("Oups, something is wrong with ID");
-			//}
-			
-			
-			printf("\n\n\rback from handleCANInterrupt\n\r");
-			printf("ID: %d\n\r",receivedCAN.ID);
-			printf("Joystick X position: %d\n\r", joystick_data.msg[0]);
-			printf("Y position: %d\n\r", receivedCAN.msg[1]);
-			printf("Direction: %d\n\r", receivedCAN.msg[2]);			
-			printf("msgLen: %d\n\r",receivedCAN.length);
+
+			joystick_data = receivedCAN;// break; }
 			
 			dutyCycle = calculateDutyCycleCounter(joystick_data.msg[0]);
-
-		}
-					//dutyCycle = calculateDutyCycleCounter(joystick_data.msg[0]);
-					//printf("DutyCycle: %d\n\r", dutyCycle);		
-					setDutyCycle(dutyCycle);
-			
-		_delay_ms(10);
+			setDutyCycle(dutyCycle);
+		}	*/
+		_delay_ms(100);
 	}
 
 	return 0;
