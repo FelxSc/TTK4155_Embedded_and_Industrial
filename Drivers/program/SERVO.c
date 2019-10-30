@@ -52,7 +52,7 @@ uint8_t calculateDutyCycleCounter( uint8_t number )
 	invertFlag = 1;
 	if(invertFlag==1)
 		number = 255 - number;
-	printf("x: %d",number);
+	//printf("x: %d",number);
 	float floatingnumber = number;
 	uint8_t cycleCounts = (uint8_t)(floatingnumber/3.44) + 57;
 	return cycleCounts;

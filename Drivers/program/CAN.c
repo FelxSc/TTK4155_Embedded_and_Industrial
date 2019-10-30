@@ -4,6 +4,9 @@
  * Created: 05.10.2019 18:18:10
  *  Author: oddiha
  */ 
+
+#define F_CPU 16000000UL // 16 Mhz
+
 #include <avr/io.h>
 #include <stdio.h>
 #include <util/delay.h>

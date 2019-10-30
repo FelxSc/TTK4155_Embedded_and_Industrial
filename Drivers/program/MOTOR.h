@@ -10,14 +10,18 @@
 #define MOTOR_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 typedef enum{CENTER, LEFT, RIGHT, DOWN, UP} motor_direction_t;
 
 typedef struct{
 	uint8_t speed;
+	uint16_t position;
+	uint16_t targetPosition;
 	motor_direction_t direction;
 	}motor_t;
+	
 	
 	motor_t motor;
 
@@ -25,8 +29,9 @@ typedef struct{
 
 void motorDriverInit( void );
 uint16_t encoderRead( void );
-void setMotorSpeed(void);
-void setMotorDirection( void );
+void setMotorSpeed( bool, uint8_t );
+void setMotorDirection( bool, uint8_t );
+uint16_t motorCalibrate( void );
 void motorDriver( void );
 
 

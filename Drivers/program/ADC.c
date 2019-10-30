@@ -21,9 +21,10 @@
 
 void ADCinit( void )
 {
-	// Enable ADC0 - PF0 as input
+	// Enable ADC2 - PF2 as input 
+	// For some reason the actual ADC that is used is AD0 (Pin PF0)
 	DDRF &= ~(1<<PF2);
-	//PORTF = (1<<PF0);
+
 		
 	// Enable ADC
 	ADCSRA = (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
@@ -46,6 +47,6 @@ uint16_t readADC( void )
 	datalow = ADCL;
 	datahigh = (ADCH<<8);
 	data = datahigh + datalow;
-	printf("IR : %d\n\r",data);
+	//printf("IR : %d\n\r",data);
 	return data;
 }

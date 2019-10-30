@@ -30,8 +30,11 @@
 #include "ADC.h"
 #include "MOTOR.h"
 #include "TWI_Master.h"
+#include "pid.h"
 
 volatile int CAN_interrupt = 0;
+volatile int pidTimer = 0;
+volatile int timercounter = 0;
 
 void InterruptInit( void )
 {
@@ -49,6 +52,13 @@ void InterruptInit( void )
 	
 	// Enable global interrupts
 	sei();
+}
+
+void Timer2Init()
+{
+	TCCR2B = 0x07;
+	TIMSK2 = 0x01;
+		
 }
 
 
@@ -111,6 +121,16 @@ ISR(TIMER1_OVF_vect)
 	//irTimer = 1;
 }
 
+ISR(TIMER2_OVF_vect)
+{
+	//timercounter++;
+	//if(timercounter >= 20)
+	//{
+		pidTimer = 1;
+	//	timercounter = 0;
+	//}
+}
+
 void IR(void)
 {
 	uint16_t ir = 0;
@@ -141,14 +161,17 @@ int main()
 	//OLEDInit();
 	//menuInit();
 	SPI_MasterInit();
-	ServoTimer1Init();
 	ADCinit();
 	solenoidInit();
 	cli();
 	TWI_Master_Initialise();
 	sei();
+	pidInit();
+
 	motorDriverInit();
-	
+	motorCalibrate();
+
+	ServoTimer1Init();
 	
 
 	
@@ -163,43 +186,73 @@ int main()
 	uint16_t encoderData;
 	CAN_message_t receivedCAN, joystick_data;
 	
+	motor.targetPosition = 60;
 	
 	
-	setMotorSpeed();
-	int counter = 0;
+	
 	while(1)
 	{
-		
+	
 		solenoidShoot();
 		
 		//uint16_t data = readADC();
 		IR();		
 		if(CAN_interrupt == 1){
 			receivedCAN = handleCANInterrupt();
+			
 
 			joystick_data = receivedCAN;// break; }
-			motor.speed = receivedCAN.msg[1];
-			motor.direction = receivedCAN.msg[2];
+			//motor.targetPosition = receivedCAN.msg[1];
+			//motor.direction = receivedCAN.msg[2];
 			
-			setMotorDirection();
-			setMotorSpeed();
+			//setMotorDirection(false, NULL);
+			//setMotorSpeed(false, NULL);
 			
 			
 			dutyCycle = calculateDutyCycleCounter(joystick_data.msg[0]);
 			setDutyCycle(dutyCycle);
-		}	
-		
-		if(counter == 10)
-			{
-				counter=0;
-				encoderData = encoderRead();
-				
-				printf("\n\rEncoderValue: %x\n\r", encoderData);
-			}
+			motor.targetPosition = joystick_data.msg[1];
 			
+		}
+		
+		
+
+/*
+		if(counter > 10){
+			counter = 0;
+			setMotorDirection(false, NULL);
+			setMotorSpeed(false, NULL);
+			printf("Speed: %d", motor.speed);
+			printf("Direction: %d", motor.direction);
+		}
+		
+			//setMotorSpeed(true, 0);
+		
+		
+		
+		//else motorDriver();	
 		
 		counter++;
-		_delay_ms(30);
+		*/
+
+
+
+		
+			if(pidTimer = 1)
+			{
+				pidTimer = 0;
+				pid_controller();
+				setMotorDirection(false, NULL);
+				setMotorSpeed(false, NULL);
+				
+				
+				//pid.currentPosition = encoderRead();
+				//pid.currentPosition = pid.currentPosition/36;
+				//printf("\n\rCurrentPosition: %d\n\r",pid.currentPosition);
+
+				printf("target %d\n\r",motor.targetPosition);
+			}
+		_delay_ms(15);
 	}
 
 	return 0;
