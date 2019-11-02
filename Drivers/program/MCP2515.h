@@ -22,13 +22,9 @@ Copyright 2003 Kimberly Otten Software Consulting
 */
 
 #include <string.h>
+#include "CAN.h"
 
 
-typedef struct {
-	uint16_t ID;
-	uint8_t length;
-	uint8_t msg[8];
-}CAN_message_t;
 
 void MCP2515_cmd(char cmd);
 void MCP2515_Write(char adr, uint8_t data);

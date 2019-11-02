@@ -1,5 +1,5 @@
 //#ifndef F_CPU
-#define F_CPU 16000000UL // 16 Mhz
+#define F_CPU 4915200UL // 4.9152 Mhz
 //#endif
 
 #include <avr/io.h>
@@ -7,7 +7,7 @@
 #include <avr/common.h>
 #include <avr/builtins.h>
 #include <avr/interrupt.h>
-#include <avr/iom2560.h>
+#include <avr/iom162.h>
 #include <util/delay.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -18,62 +18,98 @@
 //extern void USART_Init(unsigned int ubrr);
 
 
-//#include "OLED.h"
-//#include "ADC.h"
-//#include "Menu.h"
+#include "OLED.h"
+#include "ADC.h"
+#include "Menu.h"
 #include "USART.h"
-//#include "JOYSTICK.h"
+#include "JOYSTICK.h"
 #include "SPI.h"
 #include "MCP2515.h"
 #include "CAN.h"
-#include "SERVO.h"
-#include "ADC.h"
-#include "MOTOR.h"
-#include "TWI_Master.h"
-#include "pid.h"
+#include "bitMacro.h"
+
 
 volatile int CAN_interrupt = 0;
-volatile int pidTimer = 0;
-volatile int timercounter = 0;
+volatile int Timer1_interrupt = 0;
+
+
+
+void solenoidButtonInit(void)
+{	
+	// PB3 as input
+	DDRB &= ~(1 << PB3);
+
+}
+
+
+
+void Timer1Init( void )
+{
+	// Set normal mode
+	TCCR1A = 0x00;
+	
+	// Control register: Prescale = 64
+	TCCR1B = 0x02;
+	
+	// Enable TIMER1 Interrupt
+	TIMSK = 0x80;
+	
+	// Initiate TOV1 flag as cleared
+	TIFR = 0x00;	
+	
+}
+
+
+
+
+
+
+
 
 void InterruptInit( void )
 {
-	DDRD &= ~(1<<DDD3);
+	DDRD &= ~(1<<PD2); // MCP2515 interrupt
 	
 	cli();
 	
 	// Interrupt on falling edge
-	EICRA &= ~(1<<ISC30);
-	EICRA |= (1<<ISC31);
+	MCUCR &= ~(1<<ISC00);
+	MCUCR |= (1<<ISC01);
 
 	
-	// Enable Interrupt on PD3
-	EIMSK |= (1<<INT3);
+	// Enable Interrupt on PD2
+	GICR |= (1<<INT0);
 	
 	// Enable global interrupts
 	sei();
 }
 
-void Timer2Init()
+void ExernalMemoryInit( void )
 {
-	TCCR2B = 0x07;
-	TIMSK2 = 0x01;
-		
+	MCUCR |= (1<<SRE); // Enable External memory
+	SFIOR |= (1<<XMM2); // mask PORTC 4 - 7 JTAG
+	
 }
+
 
 
 CAN_message_t handleCANInterrupt()
 {
 	CAN_interrupt = 0;
-	//printf("\n\nr\rCAN Interrupt");
+	printf("\n\nr\rCAN Interrupt");
 	
 	CAN_message_t receivedCAN1;
 	
+	//CAN_message_t * receivedCAN1 = malloc(sizeof(CAN_message_t));
+	//CAN_message_t * receivedCAN2 = malloc(sizeof(CAN_message_t));
+	
+	//receivedCAN1 = received1;
+	//receivedCAN2 = received2;
 	uint8_t status;
 	
 	// Interrupt status
 	status = MCP2515_Read(MCP_CANINTF);
-	//printf("\n\rCANINTF : %x\n\n\r", status);
+	printf("\n\rCANINTF : %x\n\n\r", status);
 	
 	
 	receiveCANmesssage(&receivedCAN1, 0x60);
@@ -81,36 +117,44 @@ CAN_message_t handleCANInterrupt()
 	return receivedCAN1;
 }
 
-void solenoidInit( void )
-{
-	DDRB |= (1 << PB6);
-	
-	PORTB = (1 << PB6);
-}
 
-void solenoidShoot( void )
-{
-	PORTB &= ~(1<<PB6); 
-	
-	_delay_ms(100);
-	
-	PORTB |= (1 << PB6);
-}
-
- void returnCANmsg( CAN_message_t data )
+ void handleTimer1Interrupt( void )
  {
- 		 
+	 Timer1_interrupt = 0;
+ 		CAN_message_t data;
+		 
+		 //joystickDriver();
+		 sliderDriver();
+		 
+		 data.ID = 1;
+		 //data.msg[0] = joystick_data.x_position;
+		 //data.msg[1] = joystick_data.y_position;
+		 //data.msg[2] = joystick_data.joystickPosition;
+		 data.msg[0] = slider_data.leftslider; // Servo data -> dutycycle
+		 data.msg[1] = slider_data.rightslider; // motor position data
+		 data.msg[2] = slider_data.leftbutton;
+		 data.msg[3] = '0';
+		 data.msg[4] = '0';
+		 data.msg[5] = '0';
+		 data.msg[6] = '0';
+		 data.msg[7] = '\0';
+		 data.length = 8;
+		 
+		  
 	 	printf("\n\n\r************SENDING MSG: data *************\n\r");
 
 	 	// CAN struct test
-	 	/*printf("ID: %d\n\r",data.ID);
-	 	printf("msg: %s\n\r", data.msg);
+	 	printf("ID: %d\n\r",data.ID);
+	 	printf("X position: %d\n\r", data.msg[0]);
+	 	printf("Y position: %d\n\r", data.msg[1]);
+	 	printf("Direction: %d\n\r", data.msg[2]);
 	 	printf("msgLen: %d\n\r",data.length);
-		 */
 	 	sendCANmessage(&data);
  }
+	
 
-ISR(INT3_vect)
+
+ISR(INT0_vect)
 {
 	CAN_interrupt = 1;
 
@@ -118,62 +162,24 @@ ISR(INT3_vect)
 
 ISR(TIMER1_OVF_vect)
 {
-	//irTimer = 1;
+	Timer1_interrupt = 1;
 }
 
-ISR(TIMER2_OVF_vect)
-{
-	//timercounter++;
-	//if(timercounter >= 20)
-	//{
-		pidTimer = 1;
-	//	timercounter = 0;
-	//}
-}
 
-void IR(void)
-{
-	uint16_t ir = 0;
-	uint8_t score;
-	for(int i = 0; i<2;i++)
-		ir = ir + readADC();
-		
-	ir = ir/3;
-	
-	if(ir <= 250 )
-	{
-		score++;
-	}
-	
-	
-	
-}
-
-int main()
+void main()
 {
 	
 // ----- Initialization ----- //
 	USART_Init( MYUBRR );
 	fdevopen(&USART_Transmit, &USART_Receive);
 	InterruptInit();
-	//ExernalMemoryInit();
-	//adcInit();
-	//OLEDInit();
-	//menuInit();
+	Timer1Init();
+	ExernalMemoryInit();
+	adcInit();
+	OLEDInit();
+	menuInit();
 	SPI_MasterInit();
-	ADCinit();
-	solenoidInit();
-	cli();
-	TWI_Master_Initialise();
-	sei();
-	pidInit();
-
-	motorDriverInit();
-	motorCalibrate();
-
-	ServoTimer1Init();
-	
-
+	solenoidButtonInit();
 	
 	printf("Initialization of MCP2515...\n\r");
 	MCP2515init(MODE_NORMAL);	
@@ -182,78 +188,49 @@ int main()
 
 	
 	
-	uint8_t status, dataReceive, dutyCycle;	
-	uint16_t encoderData;
-	CAN_message_t receivedCAN, joystick_data;
+	uint8_t status, dataReceive, dataSend = 1;
 	
-	motor.targetPosition = 60;
+	CAN_message_t data1, data2, data3, receiveCAN1;
 	
-	
-	
+			 /*CAN_message_t data;
+			 
+			 data.ID = 1;
+			 data.msg[0] = '1';
+			 data.msg[1] = '0';
+			 data.msg[2] = '0';
+			 data.msg[3] = '0';
+			 data.msg[4] = '0';
+			 data.msg[5] = '0';
+			 data.msg[6] = '0';
+			 data.msg[7] = '\0';
+			 data.length = 8;
+			
+			
+			handleTimer1Interrupt();*/
 	while(1)
 	{
+		
+		if(test_bit(PINB,PINB3))
+			{ slider_data.leftbutton = 1; Timer1_interrupt = 1; }
+			
+		else
+			slider_data.leftbutton = 0;
 	
-		solenoidShoot();
-		
-		//uint16_t data = readADC();
-		IR();		
 		if(CAN_interrupt == 1){
-			receivedCAN = handleCANInterrupt();
+			receiveCAN1 = handleCANInterrupt();
 			
-
-			joystick_data = receivedCAN;// break; }
-			//motor.targetPosition = receivedCAN.msg[1];
-			//motor.direction = receivedCAN.msg[2];
+			printf("\n\n\rback from handleCANInterrupt\n\r");
+			printf("ID: %d\n\r",receiveCAN1.ID);
+			printf("msg: %s\n\r", receiveCAN1.msg);
+			printf("msgLen: %d\n\r",receiveCAN1.length);
 			
-			//setMotorDirection(false, NULL);
-			//setMotorSpeed(false, NULL);
-			
-			
-			dutyCycle = calculateDutyCycleCounter(joystick_data.msg[0]);
-			setDutyCycle(dutyCycle);
-			motor.targetPosition = joystick_data.msg[1];
 			
 		}
 		
-		
+		if(Timer1_interrupt)
+			handleTimer1Interrupt();		
 
-/*
-		if(counter > 10){
-			counter = 0;
-			setMotorDirection(false, NULL);
-			setMotorSpeed(false, NULL);
-			printf("Speed: %d", motor.speed);
-			printf("Direction: %d", motor.direction);
-		}
-		
-			//setMotorSpeed(true, 0);
-		
-		
-		
-		//else motorDriver();	
-		
-		counter++;
-		*/
-
-
-
-		
-			if(pidTimer = 1)
-			{
-				pidTimer = 0;
-				pid_controller();
-				setMotorDirection(false, NULL);
-				setMotorSpeed(false, NULL);
-				
-				
-				//pid.currentPosition = encoderRead();
-				//pid.currentPosition = pid.currentPosition/36;
-				//printf("\n\rCurrentPosition: %d\n\r",pid.currentPosition);
-
-				printf("target %d\n\r",motor.targetPosition);
-			}
-		_delay_ms(15);
+			
+		_delay_ms(20);
 	}
-
-	return 0;
 }

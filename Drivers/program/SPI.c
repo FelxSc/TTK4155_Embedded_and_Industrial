@@ -1,24 +1,21 @@
 #include "SPI.h"
 #include <avr/io.h>
+#include <stdio.h>
 
 
 
 void SPI_MasterInit(void)
 {
 	/* Set MOSI SCK and ~SS output, all others input */
-	DDRB = (1<<PB2)|(1<<PB1)|(1<<PB0) | (1<<PB7);
-	
+	DDRB = (1<<DDB5)|(1<<DDB7) | (1<<DDB4);
 	/* Enable SPI, Master, set clock rate fck/16 */
 	SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
-	
-	PORTB |= (1<<PB7);
-	//_delay_ms(1000);
 }
 
 
-char SPI_MasterTransceive(char sendData)
+uint8_t SPI_MasterTransceive(uint8_t sendData)
 {
-	char receiveData;
+	uint8_t receiveData;
 	
 	/* Start transmission */
 	SPDR = sendData;
@@ -32,7 +29,7 @@ char SPI_MasterTransceive(char sendData)
 }
 
 
-void SPI_write(char Data)
+void SPI_write(uint8_t Data)
 {
 	/* Start transmission */
 	SPDR = Data;
@@ -40,7 +37,7 @@ void SPI_write(char Data)
 	loop_until_bit_is_set(SPSR, SPIF);
 }
 
-char SPI_read(void)
+uint8_t SPI_read(void)
 {
 
 	SPDR = 0x01;
@@ -57,11 +54,11 @@ char SPI_read(void)
 void SPI_SlaveSelect(void)
 {
 	/*Select slave*/
-	PORTB &= ~(1<<PB7);
+	PORTB &= ~(1<<PB4);
 }
 
 void SPI_SlaveDeselect(void)
 {
 	/*Deselect slave*/
-	PORTB |= (1<<PB7);
+	PORTB |= (1<<PB4);
 }

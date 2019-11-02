@@ -10,6 +10,7 @@
 #include <util/delay.h>
 #include "SPI.h"
 #include "MCP2515.h"
+#include "CAN.h"
 
 
 
@@ -123,7 +124,7 @@ void MCP2515init( uint8_t MODE )
 {
 	uint8_t state;
 	MCP2515_reset();
-	
+
 	state = MCP2515_readStatus(MCP_CANSTAT);
 	printf("CANSTAT: %x\n\r", state);
 	
