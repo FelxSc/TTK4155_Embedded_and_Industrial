@@ -36,6 +36,7 @@ volatile int CAN_interrupt = 0;
 volatile int pidTimer = 0;
 volatile int timercounter = 0;
 
+//CAN INTERRUPT
 void InterruptInit( void )
 {
 	DDRD &= ~(1<<DDD3);
@@ -56,9 +57,14 @@ void InterruptInit( void )
 
 void Timer2Init()
 {
+	// Timer1
+	//TCCR1B = 0x05;
+	//TIMSK1 = 0x01;
+
+	// Timer2
 	TCCR2B = 0x07;
 	TIMSK2 = 0x01;
-		
+	
 }
 
 
@@ -73,11 +79,12 @@ CAN_message_t handleCANInterrupt()
 	
 	// Interrupt status
 	status = MCP2515_Read(MCP_CANINTF);
-	//printf("\n\rCANINTF : %x\n\n\r", status);
+	printf("\n\rCANINTF : %x\n\n\r", status);
 	
-	
+	//_delay_us(40);
 	receiveCANmesssage(&receivedCAN1, 0x60);
-	
+	//_delay_us(150);
+				
 	return receivedCAN1;
 }
 
@@ -117,17 +124,25 @@ ISR(INT3_vect)
 
 ISR(TIMER1_OVF_vect)
 {
-	//irTimer = 1;
+/*	timercounter++;
+	uint8_t status = MCP2515_readStatus(MCP_CANINTF);
+	if(timercounter >= 20)
+	{	
+		timercounter = 0;	
+		if(status == 0xa1)
+			MCP2515_bitMask(MCP_CANINTF, 0xa1, 0x00); // Check for and handle errorFlag - Reset errorflag in order to read the message
+		else if (status == 0x80)
+			MCP2515_bitMask(MCP_CANINTF, 0x80, 0x00); // Check for and handle errorFlag - Reset errorflag in order to read the message
+		else if (status == 0x21)
+			MCP2515_bitMask(MCP_CANINTF, 0x20, 0x00); // Check for and handle errorFlag - Reset errorflag in order to read the message
+			
+		MCP2515_bitMask(MCP_CANINTF, 1,0);
+	}*/
 }
 
 ISR(TIMER2_OVF_vect)
 {
-	//timercounter++;
-	//if(timercounter >= 20)
-	//{
 		pidTimer = 1;
-	//	timercounter = 0;
-	//}
 }
 
 void IR(void)
@@ -154,7 +169,11 @@ int main()
 // ----- Initialization ----- //
 	USART_Init( MYUBRR );
 	fdevopen(&USART_Transmit, &USART_Receive);
+	
+	
 	InterruptInit();
+	//Timer2Init();
+	
 	//ExernalMemoryInit();
 	//adcInit();
 	//OLEDInit();
@@ -193,13 +212,16 @@ int main()
 	{
 	
 		
-		
 		//uint16_t data = readADC();
-		IR();		
+		IR();
+		//printf("RX status: %x\n\r",MCP2515_readRXstatus());
+		
+
 		if(CAN_interrupt == 1){
+			
 			receivedCAN = handleCANInterrupt();
 			
-
+			
 			//joystick_data = receivedCAN;// break; }
 			slider_data = receivedCAN;
 			//printf("Left slider = %d\n\r", slider_data.msg[0]);
@@ -219,34 +241,11 @@ int main()
 			//motor.targetPosition = joystick_data.msg[1];
 			motor.targetPosition = 255 - slider_data.msg[1];
 			
-			//printf("%d",slider_data.msg[2]);
-			//solenoidShoot(slider_data.msg[2]);
+			solenoidShoot(slider_data.msg[2]);
 			
 		}
 		
-		
-
-/*
-		if(counter > 10){
-			counter = 0;
-			setMotorDirection(false, NULL);
-			setMotorSpeed(false, NULL);
-			printf("Speed: %d", motor.speed);
-			printf("Direction: %d", motor.direction);
-		}
-		
-			//setMotorSpeed(true, 0);
-		
-		
-		
-		//else motorDriver();	
-		
-		counter++;
-		*/
-
-
-
-		
+			
 			if(pidTimer = 1)
 			{
 				pidTimer = 0;
@@ -261,6 +260,7 @@ int main()
 
 				//printf("target %d\n\r",motor.targetPosition);
 			}
+		
 		_delay_ms(15);
 	}
 

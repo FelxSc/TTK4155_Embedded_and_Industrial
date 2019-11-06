@@ -65,7 +65,7 @@ void pid_controller(void)
 	
 	if(pid.currentPosition > 1400)
 		{ pid.currentPosition = 1;  motor.direction == DOWN; }
-//	printf("\n\rCurrentPosition: %d\n\r",pid.currentPosition);
+	//printf("\n\rCurrentPosition: %d\n\r",pid.currentPosition);
 	
 	pid.error = pid.targetPosition - pid.currentPosition;
 	//printf("error: %d\n\r",pid.error);
