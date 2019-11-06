@@ -111,8 +111,10 @@ CAN_message_t handleCANInterrupt()
 	status = MCP2515_Read(MCP_CANINTF);
 	printf("\n\rCANINTF : %x\n\n\r", status);
 	
-	
-	receiveCANmesssage(&receivedCAN1, 0x60);
+	if(status == 0xa0)
+		printf("Transaction Error\n\r");
+	else
+		receiveCANmesssage(&receivedCAN1, 0x60);
 	
 	return receivedCAN1;
 }
@@ -150,6 +152,8 @@ CAN_message_t handleCANInterrupt()
 	 	printf("Direction: %d\n\r", data.msg[2]);
 	 	printf("msgLen: %d\n\r",data.length);
 	 	sendCANmessage(&data);
+		 
+		printf("TX status: %x",MCP2515_readRxTxStatus());
  }
 	
 
@@ -189,6 +193,7 @@ void main()
 	
 	
 	uint8_t status, dataReceive, dataSend = 1;
+	uint8_t current_Line;
 	
 	CAN_message_t data1, data2, data3, receiveCAN1;
 	
@@ -211,18 +216,20 @@ void main()
 	{
 		
 		if(test_bit(PINB,PINB3))
-			{ slider_data.leftbutton = 1; Timer1_interrupt = 1; }
+			{ slider_data.leftbutton = 1; /*Timer1_interrupt = 1;*/}
 			
 		else
+		{
 			slider_data.leftbutton = 0;
+		}
 	
 		if(CAN_interrupt == 1){
 			receiveCAN1 = handleCANInterrupt();
-			
-			printf("\n\n\rback from handleCANInterrupt\n\r");
-			printf("ID: %d\n\r",receiveCAN1.ID);
-			printf("msg: %s\n\r", receiveCAN1.msg);
-			printf("msgLen: %d\n\r",receiveCAN1.length);
+				
+			//printf("\n\n\rback from handleCANInterrupt\n\r");
+			//printf("ID: %d\n\r",receiveCAN1.ID);
+			//printf("msg: %s\n\r", receiveCAN1.msg);
+			//printf("msgLen: %d\n\r",receiveCAN1.length);
 			
 			
 		}
@@ -230,6 +237,7 @@ void main()
 		if(Timer1_interrupt)
 			handleTimer1Interrupt();		
 
+		current_Line = selectMenu();
 			
 		_delay_ms(20);
 	}

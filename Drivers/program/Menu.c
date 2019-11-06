@@ -14,6 +14,7 @@ joystick_data_t joystick_data;
 volatile menu_t* currentMenu;
 volatile int currentLine = 1;
 
+
 menu_t* createMenu(char* title, menu_t* parent)
 {
 	menu_t* menu = malloc(sizeof(menu_t));
@@ -40,28 +41,39 @@ void menuInit( void )
 {
 	// Create a list of all the menu options in Main Menu
 	menu_t* mainMenu = createMenu("Main Menu", NULL);
-	menu_t* menu1 = createMenu("Menuu 1", mainMenu);
-	menu_t* menu2 = createMenu("Mennnnnu 2", mainMenu);
-	menu_t* menu3 = createMenu("Menu 3", mainMenu);
+	menu_t* playgame = createMenu("Play Game", mainMenu);
+	menu_t* options = createMenu("Options", mainMenu);
+	menu_t* highscores = createMenu("Highscores", mainMenu);
 	
-	// Create a list of all the menu options in Menu 1
+	// Create a list of all the menu options in menu1 - PLAY GAME
+		
+	// Create a list of all the menu options in menu2 - OPTIONS
+	menu_t* difficulty = createMenu("Difficulty", options);
+	menu_t* brightness = createMenu("Brightness", options);
 	
-	// Create a list of all the menu options in Menu 2
-	
-	// Create a list of all the menu options in Menu 3
-	
-	
+	// Create a list of all the menu options in menu3 - HIGHSCORES
+	menu_t* test1 = createMenu("TEST1", highscores);
+	menu_t* test2 = createMenu("TEST2", highscores);
+	menu_t* test3 = createMenu("TEST3", highscores);
+	menu_t* test4 = createMenu("TEST4", highscores);	
+		
 	// Link Main Menu-options together to form a list - firstChild then rightSibling
-	setFirstChild(mainMenu, menu1);
-	setRightSibling(menu1, menu2);
-	setRightSibling(menu2, menu3);
+	setFirstChild(mainMenu, playgame);
+	setRightSibling(playgame, options);
+	setRightSibling(options, highscores);
 	
 	// Link Menu 1 options together to form a list - firstChild then rightSibling
 	
 	// Link Menu 2 options together to form a list - firstChild then rightSibling
+	setFirstChild(options, difficulty);
+	setRightSibling(difficulty, brightness);
 	
 	// Link Menu 3 options together to form a list - firstChild then rightSibling
-	
+	setFirstChild(highscores, test1);
+	setRightSibling(test1, test2);
+	setRightSibling(test2, test3);
+	setRightSibling(test3, test4);
+		
 	currentMenu = mainMenu;
 	drawMenu(currentMenu);
 	
@@ -152,7 +164,9 @@ selectedMenu_t selectMenu()
 			{
 				currentMenu = currentMenu->firstChild;
 				for(int i = 1; i < currentLine; i++)
-				currentMenu = currentMenu->rightSibling;
+					currentMenu = currentMenu->rightSibling;
+					
+				currentLine = 1; // sets the cursor to the first line in the new menu window
 				drawMenu(currentMenu);
 			}
 

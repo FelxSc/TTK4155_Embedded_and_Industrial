@@ -39,5 +39,4 @@ selectedMenu_t selectMenu();
 void drawMenu(menu_t* menu);
 
 
-
 #endif // MENU_H

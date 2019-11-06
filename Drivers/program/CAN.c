@@ -20,7 +20,7 @@ void sendCANmessage(CAN_message_t* data)
 	status = MCP2515_readStatus(MCP_TXB0CTRL);
 	printf("TX status: %x\n\n\r", status);
 	
-	while ( (status & 0x08) ) printf("Waiting for TX0 buffer\n\r"); // CHANGE THIS WHILE LOOP, MCU gets stuck in here
+	while ( (status & 0x08) ) printf("Waiting for TX0 buffer\n\r");
 	
 	
 	uint16_t ID = data->ID;
