@@ -19,19 +19,39 @@
 
 
 
-extern joystick_data_t joystickCalibration;
-extern joystick_data_t joystick_data;
+//extern joystick_data_t joystickCalibration;
+//extern joystick_data_t joystick_data;
+
+void joystickButtonInit( void )
+{
+	DDRD &= ~(1 << PD3);
+	PORTD |= (1 << PD3);
+	
+	cli();
+		
+	// Interrupt on falling edge
+	MCUCR &= ~(1<<ISC10);
+	MCUCR |= (1<<ISC11);
+
+		
+	// Enable Interrupt on PD3
+	GICR |= (1<<INT1);
+		
+	// Enable global interrupts
+	sei();
+	
+}
 
 
 void sliderDriver()
 {
-	uint8_t leftSliderData, rightSliderData;
-	leftSliderData = getADCdata(CHANNEL1);	//Left slider
-	printf("\n\rLeft slider: %d \n\r", leftSliderData);
+	//uint8_t leftSliderData, rightSliderData;
+	slider_data.leftslider = getADCdata(CHANNEL1);	//Left slider
+	//printf("\n\rLeft slider: %d \n\r", leftSliderData);
 	
 	
-	rightSliderData = getADCdata(CHANNEL2);	// Right slider
-	printf("Right slider: %d \n\r", rightSliderData);
+	slider_data.rightslider = getADCdata(CHANNEL2);	// Right slider
+	//printf("Right slider: %d \n\r", rightSliderData);
 }
 
 joystick_direction_t get_joystick_direction(uint8_t joyst_coord_X, uint8_t joyst_coord_Y)
@@ -76,17 +96,15 @@ void joystickCalibrate( void )
 
 void joystickDriver()
 {
-	uint8_t x_axis;
-	uint8_t y_axis;
-	x_axis = getADCdata(CHANNEL4); //X axis on channel 4
-	y_axis = getADCdata(CHANNEL3); //Y axis on channel 3
+	joystick_data.x_position = getADCdata(CHANNEL4); //X axis on channel 4
+	joystick_data.y_position = getADCdata(CHANNEL3); //Y axis on channel 3
 	
 	
 	//joystick_direction_t joyst_direction; //The value should be: CENTER/LEFT/RIGHT/DOWN/UP
-	joystick_data.joystickPosition = get_joystick_direction(x_axis, y_axis);
+	joystick_data.joystickPosition = get_joystick_direction(joystick_data.x_position, joystick_data.y_position);
 	
 	
-	switch(joystick_data.joystickPosition){
+	/*switch(joystick_data.joystickPosition){
 		case CENTER:
 		printf("CENTER\n\r");
 		break;
@@ -106,6 +124,7 @@ void joystickDriver()
 		printf("The function get_joystick_direction is not returning one of these: CENTER/LEFT/RIGHT/DOWN/UP\n\r");
 		
 	}
-	printf("Joystick X = %d \n\r", x_axis);
-	printf("Joystick Y = %d \n\r", y_axis);
+	printf("Joystick X = %d \n\r", joystick_data.x_position);
+	printf("Joystick Y = %d \n\r", joystick_data.y_position);
+	*/
 }

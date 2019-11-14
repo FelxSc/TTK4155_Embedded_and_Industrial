@@ -31,19 +31,19 @@ void adcInit( void )
 	DDRE &= ~(1 << PE0);
 	
 	// PortB pin0 as input
-	DDRB &= ~(1 << PB0);
+	DDRB &= ~(1 << PB0);	// USB_RIGHT_TOUCHBUTTON
 	
 	// PortD pin 2 and 3 as input
-	DDRD &= ~(1 << PD2);
-	DDRD &= ~(1 << PD3);
+	DDRD &= ~(1 << PD2);	// MCP2515 Interrupt
+	DDRD &= ~(1 << PD3);	// JOYSTICK PUSHBUTTON - Make interrupt??
 	
 	// Set pull-up resistor PE0 & PB0
-	PORTE |= (1 << PE0);
-	PORTB |= (1 << PB0);
+	PORTE |= (1 << PE0);	// LatchEnable Active Low 
+	PORTB |= (1 << PB0);	// USB_RIGHT_TOUCHBUTTON -- Does it work?? The PUSH signal is HIGH - Maybe we need pull-down then??
 	
 	// pull-down
-	PORTD &= ~(1 << PD2);
-	PORTD &= ~(1 << PD3);
+	PORTD &= ~(1 << PD2);	// MCP2515 interrupt
+	PORTD &= ~(1 << PD3);	//	Joystick PUSHBUTTON
 	
 	//disable global interrupt
 	//cli();

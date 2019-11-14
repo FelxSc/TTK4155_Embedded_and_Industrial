@@ -3,6 +3,7 @@
 //#endif
 
 #include <avr/io.h>
+#include <string.h>
 #include <avr/common.h>
 #include <avr/builtins.h>
 #include <avr/interrupt.h>
@@ -22,6 +23,17 @@
 #include "Menu.h"
 #include "USART.h"
 #include "JOYSTICK.h"
+#include "SPI.h"
+#include "MCP2515.h"
+#include "CAN.h"
+#include "bitMacro.h"
+#include "SRAM.h"
+#include "game.h"
+#include "Interrupt.h"
+
+
+
+
 
 
 void ExernalMemoryInit( void )
@@ -31,40 +43,119 @@ void ExernalMemoryInit( void )
 	
 }
 
-int main()
+
+ISR(INT0_vect)
 {
+	CAN_interrupt = 1;
+}
+
+ISR(INT1_vect)
+{
+	joystickButtonInterrupt = 1;
+}
+
+ISR(TIMER1_OVF_vect)
+{
+	Timer1_interrupt = 1;
+}
+
+ISR(TIMER3_COMPA_vect)
+{
+	gameTimer++;
+}
+
+
+void main()
+{
+	
 // ----- Initialization ----- //
 	USART_Init( MYUBRR );
 	fdevopen(&USART_Transmit, &USART_Receive);
+	
+	cli();
+	InterruptInit();
+	Timer1Init();
+	Timer3Init();
+	sei();
 	ExernalMemoryInit();
 	adcInit();
 	OLEDInit();
-	
-	//joystickCalibrate();
-	
 	menuInit();
+	SPI_MasterInit();
+	solenoidButtonInit();
+	joystickButtonInit();
+
 	
 	
+	printf("Initialization of MCP2515...\n\r");
+	MCP2515init(MODE_NORMAL);	
 	
+
+
+	
+	
+	uint8_t status, dataReceive, dataSend = 1;
+	uint8_t current_Line;
+	
+	// game state initialized as IDLE
+	state = IDLE;
+	char dataWrite = 'a';
+	char dataRead;
+	uint16_t adr = 0x0;
+	
+	//SRAM_test();
+	gameTimer = 1025;
+	uint16_t highscore, address;
+	uint8_t highscoreLow, highscoreHigh, scoreLow, scoreHigh;
+	address = 0x0001;
 	while(1)
 	{
+		//printf("MAINloop - state = %d\n\r",state);
 		
-		int selectedMenu = selectMenu();
-		//int num = (int) selectedMenu;
+		/*printf("dataSend: %x\n\r", dataWrite);
+		SRAM_write(adr, dataWrite);
+		//dataWrite++;
+		_delay_ms(20);
+		dataRead = SRAM_read(adr);
+		printf("Address: %x - dataReceive: %x\n\r",adr, dataRead);
+		dataRead = 0;
+		adr++;*/
 		
-		//printf("-%d-", selectedMenu);
+		//SRAM_test();
 		
-		//printf("Running!\n\r");
-/*		printf("x-offset = %d\n\r", joystickCalibration.x_offset);
-		printf("y-offset = %d\n\r", joystickCalibration.y_offset);
-		joystickDriver();
 		
-		printf("-------------------------\n\r");
-		*/
-		_delay_ms(200);
+		/*printf("GAMEOVER");
+		printf("GameTimer: %d\n\r", gameTimer);
 		
+		scoreLow = gameTimer;
+		scoreHigh = gameTimer >> 8;
+		
+		printf("ScoreLow = %x\n\r", scoreLow);
+		printf("ScoreHigh = %x\n\r", scoreHigh);
+		
+			SRAM_write(address, scoreLow);
+			SRAM_write(address+1, scoreHigh);
 
+		// save the highscore to SRAM.
+		highscoreHigh = SRAM_read(address+1);
+		highscoreLow = SRAM_read(address);
+		
+		highscore = ((uint16_t)highscoreHigh << 8) | highscoreLow;
+		
+		
+		//if( gameTimer > highscore ){
+
+		//}
+		printf("highscoreLow: %x\n\r", highscoreLow);
+		printf("highscoreHigh: %x\n\r", highscoreHigh);
+		printf("highscore: %d\n\r", highscore);
+		
+		*/
+		
+		game();		
+		
+		current_Line = selectMenu();
+			
+		_delay_ms(20);
 	}
-	
-	return 0;
 }
