@@ -82,7 +82,6 @@ void pid_controller(void)
 
 
 
-
 	// Calculate Iterm and limit integral runaway
 	temp=pid.integral+pid.error;
 	if(temp > pid.maxIntegral){

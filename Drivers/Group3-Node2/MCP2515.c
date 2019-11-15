@@ -133,7 +133,7 @@ void MCP2515init( uint8_t MODE )
 		printf("MCP2515 NOT in configuration mode!\n\r");
 	}
 
-	MCP2515_bitMask(MCP_CANINTE, 0xff ,0x01); // Disable WAKEUP and TXB Interrupt and Enable RX0 Interrupt
+	MCP2515_bitMask(MCP_CANINTE, 0xff ,0x03); // Disable WAKEUP and TXB Interrupt and Enable RX0 Interrupt
 	//MCP2515_bitMask(MCP_CANINTE, 0xff ,0xa3); // Enable ERROR and RX interrupts
 	MCP2515_Write(MCP_CANCTRL,MODE); // Enable loopback mode for testing
 	

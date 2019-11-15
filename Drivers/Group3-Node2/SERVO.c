@@ -4,6 +4,10 @@
  * Created: 16.10.2019 15:37:13
  *  Author: oddiha
  */ 
+
+#define F_CPU 16000000UL // 16 Mhz
+
+
 #include <avr/io.h>
 
 #include "SERVO.h"
@@ -27,7 +31,7 @@ void ServoTimer1Init( void )
 	
 	TIMSK1 |= (1<<TOIE1);
 	
-	uint16_t pulse = 94;
+
 	OCR1A = 94;	// Initial Servo position: 94 clk cycles = 1.5 ms
 	
 }
@@ -44,7 +48,7 @@ void setDutyCycle( uint8_t count )
 		count = 57;
 		
 	OCR1A = (uint16_t)count;	// OutputCounter reg to dutyCycle counter 
-	//printf("x: %d",count);	
+	printf("x: %d",count);	
 }
 
 uint8_t calculateDutyCycleCounter( uint8_t number )

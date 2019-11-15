@@ -31,6 +31,7 @@
 #include "MOTOR.h"
 #include "TWI_Master.h"
 #include "pid.h"
+#include "game.h"
 
 volatile int CAN_interrupt = 0;
 volatile int pidTimer = 0;
@@ -57,16 +58,12 @@ void InterruptInit( void )
 
 void Timer2Init()
 {
-	// Timer1
-	//TCCR1B = 0x05;
-	//TIMSK1 = 0x01;
 
 	// Timer2
 	TCCR2B = 0x07;
 	TIMSK2 = 0x01;
 	
 }
-
 
 CAN_message_t handleCANInterrupt()
 {
@@ -79,7 +76,7 @@ CAN_message_t handleCANInterrupt()
 	
 	// Interrupt status
 	status = MCP2515_Read(MCP_CANINTF);
-	printf("\n\rCANINTF : %x\n\n\r", status);
+	//printf("\n\rCANINTF : %x\n\n\r", status);
 	
 	//_delay_us(40);
 	receiveCANmesssage(&receivedCAN1, 0x60);
@@ -124,20 +121,7 @@ ISR(INT3_vect)
 
 ISR(TIMER1_OVF_vect)
 {
-/*	timercounter++;
-	uint8_t status = MCP2515_readStatus(MCP_CANINTF);
-	if(timercounter >= 20)
-	{	
-		timercounter = 0;	
-		if(status == 0xa1)
-			MCP2515_bitMask(MCP_CANINTF, 0xa1, 0x00); // Check for and handle errorFlag - Reset errorflag in order to read the message
-		else if (status == 0x80)
-			MCP2515_bitMask(MCP_CANINTF, 0x80, 0x00); // Check for and handle errorFlag - Reset errorflag in order to read the message
-		else if (status == 0x21)
-			MCP2515_bitMask(MCP_CANINTF, 0x20, 0x00); // Check for and handle errorFlag - Reset errorflag in order to read the message
-			
-		MCP2515_bitMask(MCP_CANINTF, 1,0);
-	}*/
+	
 }
 
 ISR(TIMER2_OVF_vect)
@@ -145,19 +129,21 @@ ISR(TIMER2_OVF_vect)
 		pidTimer = 1;
 }
 
-void IR(void)
+uint8_t IR(void)
 {
 	uint16_t ir = 0;
-	uint8_t score;
 	for(int i = 0; i<2;i++)
 		ir = ir + readADC();
 		
 	ir = ir/3;
 	
-	if(ir <= 250 )
+	//printf("IR = %d\n\r", ir);
+	
+	if(ir <= 100 )
 	{
-		score++;
+		return 1;
 	}
+	return 0;
 	
 	
 	
@@ -172,7 +158,7 @@ int main()
 	
 	
 	InterruptInit();
-	//Timer2Init();
+	Timer2Init();
 	
 	//ExernalMemoryInit();
 	//adcInit();
@@ -189,12 +175,11 @@ int main()
 	motorDriverInit();
 	motorCalibrate();
 
-	ServoTimer1Init();
 	
-
 	
 	printf("Initialization of MCP2515...\n\r");
-	MCP2515init(MODE_NORMAL);	
+	MCP2515init(MODE_NORMAL);
+		
 	//joystickCalibrate();
 	
 
@@ -202,28 +187,26 @@ int main()
 	
 	uint8_t status, dataReceive, dutyCycle;	
 	uint16_t encoderData;
-	CAN_message_t receivedCAN, joystick_data, slider_data;
+	CAN_message_t receivedCAN, joystick_data, slider_data, game_data;
 	
 	motor.targetPosition = 60;
+	game_data.msg[0] = 120;
 	
+	ServoTimer1Init();
 	
 	
 	while(1)
 	{
 	
 		
-		//uint16_t data = readADC();
-		IR();
-		//printf("RX status: %x\n\r",MCP2515_readRXstatus());
-		
 
 		if(CAN_interrupt == 1){
+
 			
-			receivedCAN = handleCANInterrupt();
-			
+			game_data = handleCANInterrupt();	
 			
 			//joystick_data = receivedCAN;// break; }
-			slider_data = receivedCAN;
+			//game_data = receivedCAN;
 			//printf("Left slider = %d\n\r", slider_data.msg[0]);
 			//printf("Right slider = %d\n\r", slider_data.msg[1]);
 			
@@ -235,31 +218,43 @@ int main()
 			
 			
 			//dutyCycle = calculateDutyCycleCounter(joystick_data.msg[0]);
-			dutyCycle = calculateDutyCycleCounter(slider_data.msg[0]);
+			dutyCycle = calculateDutyCycleCounter(game_data.msg[0]);
 			setDutyCycle(dutyCycle);
 			//printf("Servo-duty cycle = %d\n\r", dutyCycle);
 			//motor.targetPosition = joystick_data.msg[1];
-			motor.targetPosition = 255 - slider_data.msg[1];
+			motor.targetPosition = 255 - game_data.msg[1];
 			
-			solenoidShoot(slider_data.msg[2]);
+			//printf("Button = %d\n\r", game_data.msg[2]);
+			solenoidShoot(game_data.msg[2]);
 			
 		}
 		
 			
-			if(pidTimer = 1)
-			{
-				pidTimer = 0;
-				pid_controller();
-				setMotorDirection(false, NULL);
-				setMotorSpeed(false, NULL);
+		if(pidTimer == 1 & game_data.msg[3] == GAMESTART)
+		{
+			
+			pidTimer = 0;
+			pid_controller();
+			setMotorDirection(false, NULL);
+			setMotorSpeed(false, NULL);
 				
-				
-				//pid.currentPosition = encoderRead();
-				//pid.currentPosition = pid.currentPosition/36;
-				//printf("\n\rCurrentPosition: %d\n\r",pid.currentPosition);
+			//pid.currentPosition = encoderRead();
+			//pid.currentPosition = pid.currentPosition/36;
+			//printf("\n\rCurrentPosition: %d\n\r",pid.currentPosition);
 
-				//printf("target %d\n\r",motor.targetPosition);
-			}
+			//printf("target %d\n\r",motor.targetPosition);
+		
+			
+			if(IR() == 1)
+				{
+					//cli();
+					game_data.ID = 3;
+					game_data.msg[3] = GAMEOVER;
+					sendCANmessage(&game_data);
+					printf("HELLO IR?");
+					//sei();
+				}
+		}
 		
 		_delay_ms(15);
 	}

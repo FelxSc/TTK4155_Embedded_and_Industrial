@@ -22,7 +22,7 @@ void sendCANmessage(CAN_message_t* data)
 	status = MCP2515_readStatus(MCP_TXB0CTRL);
 	//printf("TX status: %x\n\n\r", status);
 	
-	while ( (status & 0x08) ) printf("Waiting for TX0 buffer\n\r"); // CHANGE THIS WHILE LOOP, MCU gets stuck in here
+	//while ( (status & 0x08) ) printf("Waiting for TX0 buffer\n\r"); // CHANGE THIS WHILE LOOP, MCU gets stuck in here
 	
 	
 	uint16_t ID = data->ID;
@@ -48,6 +48,7 @@ void sendCANmessage(CAN_message_t* data)
 
 	// Request to send
 	MCP2515_RTS(MCP_RTS_TX0);
+	MCP2515_bitMask(MCP_CANINTF, MCP_TX0IF, 0x00);
 }
 
 
@@ -55,10 +56,11 @@ void sendCANmessage(CAN_message_t* data)
 void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 {
 	uint16_t ID;
-	uint8_t IDlow, IDhigh, data_length_code, nrOfBytes;
+	uint8_t IDlow, IDhigh, data_length_code, nrOfBytes, status;
 
 	IDhigh = MCP2515_Read(MCP_RXB0SIDH);	// RXBnBASE + offset = RXBnSIDH
 	//IDlow = MCP2515_Read(MCP_RXB0SIDL);		// RXBnBASE + offset = RXBnSIDL ---- IDlow does not work
+	
 	
 
 	//data->ID = /*(IDhigh << 8) |*/ IDlow; ---- ID low does not work
@@ -77,6 +79,10 @@ void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 	{
 		data->msg[byte] = MCP2515_Read(MCP_RXB0DM+byte);	// RXBnBASE + offset = MCP_RXBnDm
 	}
+	
+	/*status = MCP2515_readStatus(MCP_CANINTF);
+	printf("CANINTF RECEIVE: %x\n\n\r", status);*/
+	
 	MCP2515_bitMask(MCP_CANINTF, MCP_RX0IF, 0x00);
 }
 
