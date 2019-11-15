@@ -2,6 +2,9 @@
 #include "ADC.h"
 #include "JOYSTICK.h"
 #include "Menu.h"
+#include "Interrupt.h"
+#include "game.h"
+
 #include <avr/io.h>
 #include <avr/common.h>
 #include <stdbool.h>
@@ -15,11 +18,12 @@ volatile menu_t* currentMenu;
 volatile int currentLine = 1;
 
 
-menu_t* createMenu(char* title, menu_t* parent)
+menu_t* createMenu(char* title, menu_t* parent, selectedMenu_t* ID)
 {
 	menu_t* menu = malloc(sizeof(menu_t));
 	menu->title = title;
 	menu->parent = parent;
+	menu->ID = ID;
 	menu->firstChild = NULL;
 	menu->rightSibling = NULL;
 	return menu;
@@ -40,22 +44,22 @@ void setRightSibling(menu_t* thisChild, menu_t* rightSibling)	// Make sure this 
 void menuInit( void )
 {
 	// Create a list of all the menu options in Main Menu
-	menu_t* mainMenu = createMenu("Main Menu", NULL);
-	menu_t* playgame = createMenu("Play Game", mainMenu);
-	menu_t* options = createMenu("Options", mainMenu);
-	menu_t* highscores = createMenu("Highscores", mainMenu);
+	menu_t* mainMenu = createMenu("Main Menu", NULL, MAIN_MENU);
+	menu_t* playgame = createMenu("Play Game", mainMenu, PLAYGAME);
+	menu_t* options = createMenu("Options", mainMenu, OPTIONS);
+	menu_t* highscores = createMenu("Highscores", mainMenu, HIGSCORES);
 	
 	// Create a list of all the menu options in menu1 - PLAY GAME
 		
 	// Create a list of all the menu options in menu2 - OPTIONS
-	menu_t* difficulty = createMenu("Difficulty", options);
-	menu_t* brightness = createMenu("Brightness", options);
+	menu_t* difficulty = createMenu("Difficulty", options,DIFFICULTY);
+	menu_t* brightness = createMenu("Brightness", options, BRIGHTNESS);
 	
 	// Create a list of all the menu options in menu3 - HIGHSCORES
-	menu_t* test1 = createMenu("TEST1", highscores);
-	menu_t* test2 = createMenu("TEST2", highscores);
-	menu_t* test3 = createMenu("TEST3", highscores);
-	menu_t* test4 = createMenu("TEST4", highscores);	
+	menu_t* test1 = createMenu("TEST1", highscores, TEST1);
+	menu_t* test2 = createMenu("TEST2", highscores, TEST2);
+	menu_t* test3 = createMenu("TEST3", highscores, TEST3);
+	menu_t* test4 = createMenu("TEST4", highscores, TEST4);	
 		
 	// Link Main Menu-options together to form a list - firstChild then rightSibling
 	setFirstChild(mainMenu, playgame);
@@ -133,6 +137,18 @@ void drawMenu(menu_t* menu)	// pointer to the selected function
 	
 }
 
+void gotoMenuFunction(menu_t* menu)
+{
+	//printf("%s - %d",currentMenu->title, currentMenu->ID);
+	switch ((int)currentMenu->ID)
+	{
+		case MAIN_MENU: printf("Main Menu function"); break;
+		case PLAYGAME: printf("play game"); game(); break;
+		case TEST1: printf("test1 function"); break;
+		default: printf("Unknown Menu"); break;
+	}
+}
+
 
 selectedMenu_t selectMenu()
 {
@@ -174,8 +190,9 @@ selectedMenu_t selectMenu()
 			break;
 		default:
 			// If direction = CENTER - Do nothing
-		
-		
+		if(joystickButtonInterrupt == 1 && (currentMenu->firstChild == NULL))
+			{	joystickButtonInterrupt = 0; gotoMenuFunction(&currentMenu);	}
+				
 		return currentLine;
 		
 	}

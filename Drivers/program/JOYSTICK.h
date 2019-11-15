@@ -40,6 +40,8 @@ void sliderDriver(void);
 joystick_direction_t get_joystick_direction(uint8_t joyst_coord_X, uint8_t joyst_coord_Y);
 void joystickCalibrate(void);
 void joystickDriver(void);
+void joystickButtonInit( void );
+
 
 slider_data_t slider_data;
 joystick_data_t joystickCalibration;

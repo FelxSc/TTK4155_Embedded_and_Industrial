@@ -21,18 +21,21 @@ typedef struct menu{
 	char *Items[]; // Pointer to item strings
 }menu_t;*/
 
-// Menu structure as the LeftChild-RightSibling (LCRS)
 
+typedef enum{
+	MAIN_MENU, PLAYGAME, OPTIONS, HIGSCORES, DIFFICULTY, BRIGHTNESS, TEST1, TEST2, TEST3, TEST4
+} selectedMenu_t;
+
+// Menu structure as the LeftChild-RightSibling (LCRS)
 typedef struct{
 	char* title;
+	selectedMenu_t* ID;
 	struct menu_t* parent;
 	struct menu_t* firstChild;
 	struct menu_t* rightSibling;
 }menu_t;
 
-typedef enum{
-	MAIN_MENU, MENU1, MENU2, MENU3
-	} selectedMenu_t;
+
 
 void menuInit( void );
 selectedMenu_t selectMenu();

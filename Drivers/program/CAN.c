@@ -18,7 +18,7 @@ void sendCANmessage(CAN_message_t* data)
 	uint8_t IDlow, IDhigh, status, nrOfBytes;
 
 	status = MCP2515_readStatus(MCP_TXB0CTRL);
-	printf("TX status: %x\n\n\r", status);
+	//printf("TX status: %x\n\n\r", status);
 	
 	while ( (status & 0x08) ) printf("Waiting for TX0 buffer\n\r");
 	
@@ -37,7 +37,7 @@ void sendCANmessage(CAN_message_t* data)
 	
 	MCP2515_Write(MCP_TXB0DLC, data->length);	// TXBnBASE + offset = MCP_TXBnDLC
 	nrOfBytes = data->length;
-	printf("nrOfBytes : %d",nrOfBytes);
+	//printf("nrOfBytes : %d",nrOfBytes);
 	
 	for(uint8_t byte = 0; byte < nrOfBytes; byte++)
 	{
@@ -46,6 +46,7 @@ void sendCANmessage(CAN_message_t* data)
 
 	// Request to send
 	MCP2515_RTS(MCP_RTS_TX0);
+	MCP2515_bitMask(MCP_CANINTF, MCP_TX0IF, 0x00);
 }
 
 
@@ -55,7 +56,7 @@ void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 	uint16_t ID;
 	uint8_t IDlow, IDhigh, data_length_code, nrOfBytes;
 
-	IDhigh = MCP2515_Read(MCP_RXB0SIDH);	// RXBnBASE + offset = RXBnSIDH
+	IDhigh = MCP2515_Read(MCP_RXB1SIDH);	// RXBnBASE + offset = RXBnSIDH
 	//IDlow = MCP2515_Read(MCP_RXB0SIDL);		// RXBnBASE + offset = RXBnSIDL ---- IDlow does not work
 	
 
@@ -65,7 +66,7 @@ void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 
 
 	
-	data_length_code = MCP2515_Read(MCP_RXB0DLC);	// RXBnBASE + offset = MCP_RXBnDLC
+	data_length_code = MCP2515_Read(MCP_RXB1DLC);	// RXBnBASE + offset = MCP_RXBnDLC
 	nrOfBytes = data_length_code & 0b1111;
 	
 	data->length = data_length_code & 0b1111;
@@ -73,8 +74,10 @@ void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 	
 	for(uint8_t byte = 0; byte < nrOfBytes; byte++)
 	{
-		data->msg[byte] = MCP2515_Read(MCP_RXB0DM+byte);	// RXBnBASE + offset = MCP_RXBnDm
+		data->msg[byte] = MCP2515_Read(MCP_RXB1DM+byte);	// RXBnBASE + offset = MCP_RXBnDm
 	}
-	MCP2515_bitMask(MCP_CANINTF, MCP_RX0IF, 0x00);
+	//MCP2515_bitMask(MCP_CANINTF, MCP_RX0IF, 0x00);
+	MCP2515_bitMask(MCP_CANINTF, MCP_RX1IF, 0x00);
+
 }
 

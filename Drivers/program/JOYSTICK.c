@@ -22,6 +22,26 @@
 //extern joystick_data_t joystickCalibration;
 //extern joystick_data_t joystick_data;
 
+void joystickButtonInit( void )
+{
+	DDRD &= ~(1 << PD3);
+	PORTD |= (1 << PD3);
+	
+	cli();
+		
+	// Interrupt on falling edge
+	MCUCR &= ~(1<<ISC10);
+	MCUCR |= (1<<ISC11);
+
+		
+	// Enable Interrupt on PD3
+	GICR |= (1<<INT1);
+		
+	// Enable global interrupts
+	sei();
+	
+}
+
 
 void sliderDriver()
 {
@@ -84,7 +104,7 @@ void joystickDriver()
 	joystick_data.joystickPosition = get_joystick_direction(joystick_data.x_position, joystick_data.y_position);
 	
 	
-	switch(joystick_data.joystickPosition){
+	/*switch(joystick_data.joystickPosition){
 		case CENTER:
 		printf("CENTER\n\r");
 		break;
@@ -106,4 +126,5 @@ void joystickDriver()
 	}
 	printf("Joystick X = %d \n\r", joystick_data.x_position);
 	printf("Joystick Y = %d \n\r", joystick_data.y_position);
+	*/
 }

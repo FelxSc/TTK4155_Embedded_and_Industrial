@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <avr/pgmspace.h>
+#include <avr/eeprom.h>
 
 //extern void USART_Init(unsigned int ubrr);
 
@@ -27,62 +28,15 @@
 #include "MCP2515.h"
 #include "CAN.h"
 #include "bitMacro.h"
-
-
-volatile int CAN_interrupt = 0;
-volatile int Timer1_interrupt = 0;
-
-
-
-void solenoidButtonInit(void)
-{	
-	// PB3 as input
-	DDRB &= ~(1 << PB3);
-
-}
-
-
-
-void Timer1Init( void )
-{
-	// Set normal mode
-	TCCR1A = 0x00;
-	
-	// Control register: Prescale = 64
-	TCCR1B = 0x02;
-	
-	// Enable TIMER1 Interrupt
-	TIMSK = 0x80;
-	
-	// Initiate TOV1 flag as cleared
-	TIFR = 0x00;	
-	
-}
+#include "SRAM.h"
+#include "game.h"
+#include "Interrupt.h"
+#include "EEPROM.h"
 
 
 
 
-
-
-
-
-void InterruptInit( void )
-{
-	DDRD &= ~(1<<PD2); // MCP2515 interrupt
-	
-	cli();
-	
-	// Interrupt on falling edge
-	MCUCR &= ~(1<<ISC00);
-	MCUCR |= (1<<ISC01);
-
-	
-	// Enable Interrupt on PD2
-	GICR |= (1<<INT0);
-	
-	// Enable global interrupts
-	sei();
-}
+uint8_t timer1Flag;
 
 void ExernalMemoryInit( void )
 {
@@ -92,81 +46,26 @@ void ExernalMemoryInit( void )
 }
 
 
-
-CAN_message_t handleCANInterrupt()
-{
-	CAN_interrupt = 0;
-	printf("\n\nr\rCAN Interrupt");
-	
-	CAN_message_t receivedCAN1;
-	
-	//CAN_message_t * receivedCAN1 = malloc(sizeof(CAN_message_t));
-	//CAN_message_t * receivedCAN2 = malloc(sizeof(CAN_message_t));
-	
-	//receivedCAN1 = received1;
-	//receivedCAN2 = received2;
-	uint8_t status;
-	
-	// Interrupt status
-	status = MCP2515_Read(MCP_CANINTF);
-	printf("\n\rCANINTF : %x\n\n\r", status);
-	
-	if(status == 0xa0)
-		printf("Transaction Error\n\r");
-	else
-		receiveCANmesssage(&receivedCAN1, 0x60);
-	
-	return receivedCAN1;
-}
-
-
- void handleTimer1Interrupt( void )
- {
-	 Timer1_interrupt = 0;
- 		CAN_message_t data;
-		 
-		 //joystickDriver();
-		 sliderDriver();
-		 
-		 data.ID = 1;
-		 //data.msg[0] = joystick_data.x_position;
-		 //data.msg[1] = joystick_data.y_position;
-		 //data.msg[2] = joystick_data.joystickPosition;
-		 data.msg[0] = slider_data.leftslider; // Servo data -> dutycycle
-		 data.msg[1] = slider_data.rightslider; // motor position data
-		 data.msg[2] = slider_data.leftbutton;
-		 data.msg[3] = '0';
-		 data.msg[4] = '0';
-		 data.msg[5] = '0';
-		 data.msg[6] = '0';
-		 data.msg[7] = '\0';
-		 data.length = 8;
-		 
-		  
-	 	printf("\n\n\r************SENDING MSG: data *************\n\r");
-
-	 	// CAN struct test
-	 	printf("ID: %d\n\r",data.ID);
-	 	printf("X position: %d\n\r", data.msg[0]);
-	 	printf("Y position: %d\n\r", data.msg[1]);
-	 	printf("Direction: %d\n\r", data.msg[2]);
-	 	printf("msgLen: %d\n\r",data.length);
-	 	sendCANmessage(&data);
-		 
-		printf("TX status: %x",MCP2515_readRxTxStatus());
- }
-	
-
-
 ISR(INT0_vect)
 {
 	CAN_interrupt = 1;
+}
 
+ISR(INT1_vect)
+{
+	joystickButtonInterrupt = 1;
 }
 
 ISR(TIMER1_OVF_vect)
 {
-	Timer1_interrupt = 1;
+	timer1Flag++;
+	if(timer1Flag > 1)
+	{ timer1Flag = 0;	Timer1_interrupt = 1; }
+}
+
+ISR(TIMER3_COMPA_vect)
+{
+	gameTimer++;
 }
 
 
@@ -176,67 +75,88 @@ void main()
 // ----- Initialization ----- //
 	USART_Init( MYUBRR );
 	fdevopen(&USART_Transmit, &USART_Receive);
+	
+	cli();
 	InterruptInit();
 	Timer1Init();
+	Timer3Init();
+	sei();
 	ExernalMemoryInit();
 	adcInit();
 	OLEDInit();
 	menuInit();
 	SPI_MasterInit();
 	solenoidButtonInit();
+	gameButtonInit();
+	joystickButtonInit();
+
+	
 	
 	printf("Initialization of MCP2515...\n\r");
 	MCP2515init(MODE_NORMAL);	
-	//joystickCalibrate();
 	
+
 
 	
 	
 	uint8_t status, dataReceive, dataSend = 1;
 	uint8_t current_Line;
 	
-	CAN_message_t data1, data2, data3, receiveCAN1;
+	// game state initialized as IDLE
+	state = START;
 	
-			 /*CAN_message_t data;
-			 
-			 data.ID = 1;
-			 data.msg[0] = '1';
-			 data.msg[1] = '0';
-			 data.msg[2] = '0';
-			 data.msg[3] = '0';
-			 data.msg[4] = '0';
-			 data.msg[5] = '0';
-			 data.msg[6] = '0';
-			 data.msg[7] = '\0';
-			 data.length = 8;
-			
-			
-			handleTimer1Interrupt();*/
+	char dataWrite = 'a';
+	char dataRead;
+	uint16_t adr = 0x0;
+	
+	uint16_t highscore, address;
+	uint8_t highscoreLow, highscoreHigh, scoreLow, scoreHigh;
 	while(1)
 	{
+		//printf("MAINloop - state = %d\n\r",state);
 		
-		if(test_bit(PINB,PINB3))
-			{ slider_data.leftbutton = 1; /*Timer1_interrupt = 1;*/}
-			
-		else
-		{
-			slider_data.leftbutton = 0;
-		}
-	
-		if(CAN_interrupt == 1){
-			receiveCAN1 = handleCANInterrupt();
-				
-			//printf("\n\n\rback from handleCANInterrupt\n\r");
-			//printf("ID: %d\n\r",receiveCAN1.ID);
-			//printf("msg: %s\n\r", receiveCAN1.msg);
-			//printf("msgLen: %d\n\r",receiveCAN1.length);
-			
-			
-		}
+		/*printf("dataSend: %x\n\r", dataWrite);
+		SRAM_write(adr, dataWrite);
+		//dataWrite++;
+		_delay_ms(20);
+		dataRead = SRAM_read(adr);
+		printf("Address: %x - dataReceive: %x\n\r",adr, dataRead);
+		dataRead = 0;
+		adr++;*/
 		
-		if(Timer1_interrupt)
-			handleTimer1Interrupt();		
+		//SRAM_test();
+		
+		
+		/*printf("GAMEOVER");
+		printf("GameTimer: %d\n\r", gameTimer);
+		
+		scoreLow = gameTimer;
+		scoreHigh = gameTimer >> 8;
+		
+		printf("ScoreLow = %x\n\r", scoreLow);
+		printf("ScoreHigh = %x\n\r", scoreHigh);
+		
+			SRAM_write(address, scoreLow);
+			SRAM_write(address+1, scoreHigh);
 
+		// save the highscore to SRAM.
+		highscoreHigh = SRAM_read(address+1);
+		highscoreLow = SRAM_read(address);
+		
+		highscore = ((uint16_t)highscoreHigh << 8) | highscoreLow;
+		
+		
+		//if( gameTimer > highscore ){
+
+		//}
+		printf("highscoreLow: %x\n\r", highscoreLow);
+		printf("highscoreHigh: %x\n\r", highscoreHigh);
+		printf("highscore: %d\n\r", highscore);
+		
+		*/
+		
+		//game();		
+		
 		current_Line = selectMenu();
 			
 		_delay_ms(20);

@@ -21,7 +21,9 @@
 
 void SRAM_test(void)
 {
+	printf("ENTERING SRAM TEST\n\r");
 	volatile char *ext_ram = (char *) 0x1800; // Start address for the SRAM
+	printf("ext ram\n\r");
 	uint16_t ext_ram_size= 0x800;
 	uint16_t write_errors= 0;
 	uint16_t retrieval_errors= 0;
@@ -94,29 +96,22 @@ void LatchTest( void )
 
 
 
-int SRAM_write(uint16_t address, char data){
+void SRAM_write(uint16_t address, char data){
 	
-	//if (address > 0x7FF){
-	//	printf("SRAM error, trying to write to an address that is too big\n");
-	//	return EXIT_FAILURE;
-	//}
-	
-	volatile char* ext_ram = SRAM_FIRST_ADDRESS;	//Create a pointer to the array of all addresses we will write to. SRAM starting at 0x1800. ext_ram[0x7FF] is maximum because 0x1800 + 0x7FF = 0x1FFF!
+	volatile char *ext_ram = (char *) SRAM_FIRST_ADDRESS;	//Create a pointer to the array of all addresses we will write to. SRAM starting at 0x1800. ext_ram[0x7FF] is maximum because 0x1800 + 0x7FF = 0x1FFF!
 	ext_ram[address] = data;
-	
-	return 0;
 }
 
-char SRAM_read(uint16_t address){
+uint8_t SRAM_read(uint16_t address){
 	
 	//if (address > 0x7FF){
 	//	printf("SRAM error, trying to read an address that is too big\n");
 	//	return EXIT_FAILURE;
 	//}
-	
-	volatile char* ext_ram = SRAM_FIRST_ADDRESS;
-	return ext_ram[address];
-	
+	uint8_t value = 0;
+	volatile char *ext_ram = (char *) SRAM_FIRST_ADDRESS;
+	value = ext_ram[address];
+	return value;
 }
 /*
 int main(void)

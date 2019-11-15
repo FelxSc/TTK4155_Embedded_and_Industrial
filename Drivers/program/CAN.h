@@ -17,6 +17,9 @@ typedef struct {
 }CAN_message_t;
 
 
+CAN_message_t game_data;
+
+
 void sendCANmessage(CAN_message_t* data);
 void receiveCANmesssage( CAN_message_t* data, uint8_t reg );
 
