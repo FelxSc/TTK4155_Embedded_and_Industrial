@@ -29,24 +29,28 @@ void OLEDGotoColumn(uint8_t column);
 void OLEDClearLine(uint8_t line);
 void OLEDClearAll(void);
 void OLEDClearColumn(void);
-void OLEDPrint(unsigned char);
+void OLEDPrint(uint8_t);
 void OLEDPrintf(char* data, ...);
 void OLEDinvPrintf(char* data, ...);
 void OLEDGotoPosition(uint8_t line, uint8_t column);
-int OLEDinvertedPrint(unsigned char c);
+int OLEDinvertedPrint(unsigned char data);
 void OLEDprintArrowRight(void);
 void OLEDprintArrowLeft(void);
+void OLEDcreateBar(void);
+void OLEDContrast(void);
 
 
 void write_c(uint8_t command);	// write commands to OLED
-void write_d(char data);		// write data to OLED
+void write_d(unsigned char data);		// write data to OLED
 
-typedef struct OLEDposition
+typedef struct OLED
 {
 	uint8_t line;
 	uint8_t column;
-}OLEDposition_t;
+	//uint8_t fontSize;
+	uint8_t brightness;
+}OLED_t;
 
-OLEDposition_t OLEDpos;
+OLED_t OLEDpos;
 
 #endif // OLED_H

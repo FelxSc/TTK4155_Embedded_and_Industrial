@@ -47,6 +47,7 @@ void sliderDriver()
 {
 	//uint8_t leftSliderData, rightSliderData;
 	slider_data.leftslider = getADCdata(CHANNEL1);	//Left slider
+	printf("ServoSlider: %d",slider_data.leftslider);
 	//printf("\n\rLeft slider: %d \n\r", leftSliderData);
 	
 	

@@ -158,7 +158,9 @@ void main()
 		//game();		
 		
 		current_Line = selectMenu();
-			
+			//OLEDClearAll();
 		_delay_ms(20);
+		//_delay_ms(500);
+		
 	}
 }

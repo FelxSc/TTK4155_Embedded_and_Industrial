@@ -150,11 +150,8 @@ void SendTimer1CANmsg( void )
 	 // Interrupt status
 	 status = MCP2515_Read(MCP_CANINTF);
 	 printf("\n\rCANINTF : %x\n\n\r", status);
-	 
-	 if(status == 0xa0)
-	 printf("Transaction Error\n\r");
-	 else
+	 cli();
 	 receiveCANmesssage(&receivedCAN1, 0x60);
-	 
+	 sei();
 	 return receivedCAN1;
  }

@@ -27,6 +27,7 @@
 #include "FONTS.h"
 #include "OLED.h"
 #include "JOYSTICK.h"
+#include "bitMacro.h"
 
 
 static FILE mystdout = FDEV_SETUP_STREAM(OLEDPrint, NULL, _FDEV_SETUP_WRITE);				
@@ -35,14 +36,14 @@ static FILE myinvstdout = FDEV_SETUP_STREAM(OLEDinvertedPrint, NULL, _FDEV_SETUP
 volatile uint8_t* extOledCmd = (uint8_t*) OLED_COMMAND_ADDRESS;
 volatile uint8_t* extOledData = (uint8_t*) OLED_DATA_ADDRESS;
 
-extern OLEDposition_t OLEDpos = {0,0};
+extern OLED_t OLEDpos = {0,0, 80};
 
 void write_c(uint8_t command)
 {
 	*extOledCmd = command;
 }
 
-void write_d(char data)
+void write_d(uint8_t data)
 {
 	*extOledData = data;
 }
@@ -104,10 +105,8 @@ void OLEDClearAll()
 void OLEDPrintf(char* data, ...)
 {
 	va_list args;
-	//uint8_t length;	// for getting the length of the string
 	va_start(args, data);
 	vfprintf(&mystdout, data, args);
-	//length = strlen(data);
 	va_end(args);
 	
 	// take the length of the string and loop through the columns to get the current column
@@ -124,10 +123,8 @@ void OLEDPrintf(char* data, ...)
 void OLEDinvPrintf(char* data, ...)
 {
 	va_list args;
-	//uint8_t length; // for getting the length of the string
 	va_start(args, data);
 	vfprintf(&myinvstdout, data, args);
-	//length = strlen(data);
 	va_end(args);
 	
 /*	// take the length of the string and loop through the columns to get the current column
@@ -142,12 +139,18 @@ void OLEDinvPrintf(char* data, ...)
 }
 
 
-int OLEDinvertedPrint(unsigned char c)
+int OLEDinvertedPrint(unsigned char data)
 {
-	uint8_t printChar = c-32;
+	//uint8_t printChar = c-32;
 	
 	for (int i=0; i < FONTSIZE; i++) {
-		write_d(~pgm_read_word(&font8[printChar][i]));
+		//Write_d(~pgm_read_word(&font8[printChar][i]));
+		switch (FONTSIZE)
+		{
+			case 4: write_d(~pgm_read_byte(&(font4[data - ' '][i]))); break;
+			case 5: write_d(~pgm_read_byte(&(font5[data - ' '][i]))); break;
+			case 8: write_d(~pgm_read_byte(&(font8[data - ' '][i]))); break;
+		}
 		//position.col += fontSize;
 		//oled_is_out_of_bounds();
 	}
@@ -208,21 +211,76 @@ void OLEDInit(void)
 	OLEDHome();
 }
 
-/*
-void OledReset()
-{
-	
-}*/
 
 
-void OLEDPrint(unsigned char data)
+void OLEDPrint(uint8_t data)
 {
 	for (int i=0; i<FONTSIZE; i++)
 	{
-		write_d(pgm_read_byte(&(font8[data - ' '][i])));
+		switch (FONTSIZE)
+		{
+		case 4: write_d(pgm_read_byte(&(font4[data - ' '][i]))); break;
+		case 5: write_d(pgm_read_byte(&(font5[data - ' '][i]))); break;
+		case 8: write_d(pgm_read_byte(&(font8[data - ' '][i]))); break;
+		}
 	}
 }
 
+
+void OLEDContrast(void)
+{
+	OLEDcreateBar();
+	
+	OLEDGotoPosition(3,0);
+	OLEDPrintf("Use joystick!");
+	OLEDGotoPosition(4,0);
+	OLEDPrintf("Keep brightness?");
+	OLEDGotoPosition(5,0);
+	OLEDPrintf("Press r. button");
+	OLEDcreateBar();
+	
+	{
+		joystickDriver();
+		
+		if(joystick_data.joystickPosition == UP && OLEDpos.column < 115)
+		{
+			write_c(0x81);
+			write_c((++OLEDpos.brightness));
+			write_d(0b11111111);
+			OLEDGotoColumn(OLEDpos.column++);
+		}
+		else if(joystick_data.joystickPosition == DOWN && OLEDpos.column > 14 )
+		{
+			write_c(0x81);
+			write_c(--OLEDpos.brightness);
+			write_d(0b11000011);
+			OLEDGotoColumn(OLEDpos.column--);
+		}
+
+	}while(!test_bit(PINB,PINB3));
+
+}
+
+
+void OLEDcreateBar(void)
+{
+	OLEDGotoPosition(7,12);
+	write_d(0b11111111);
+	write_d(0b11111111);
+	for(int i = 0; i < 50; i++)
+	{
+		write_d(0b11111111);
+	}
+	for(int i = 0; i < 50; i++)
+	{
+		write_d(0b11000011);
+	}
+
+	write_d(0b11111111);
+	write_d(0b11111111);
+
+	OLEDGotoPosition(7,14);
+}
 
 /*
 int main(void)

@@ -75,6 +75,8 @@ void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 	for(uint8_t byte = 0; byte < nrOfBytes; byte++)
 	{
 		data->msg[byte] = MCP2515_Read(MCP_RXB1DM+byte);	// RXBnBASE + offset = MCP_RXBnDm
+	printf("msg[%d]: %d\n\r",byte, data->msg[byte]);
+	
 	}
 	//MCP2515_bitMask(MCP_CANINTF, MCP_RX0IF, 0x00);
 	MCP2515_bitMask(MCP_CANINTF, MCP_RX1IF, 0x00);

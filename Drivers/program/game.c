@@ -25,6 +25,7 @@
 #include "CAN.h"
 #include "bitMacro.h"
 #include "EEPROM.h"
+#include "OLED.h"
 
 uint8_t leftButtonFlag = 0;
 
@@ -44,11 +45,19 @@ void game(void){
 	do{
 		switch(state){
 			case START:
+				OLEDGotoPosition(2,2);
+				
+				OLEDPrintf("Left button: Start game");
+				OLEDGotoPosition(3,2);
+				OLEDPrintf("Right button: Cancel");
 				printf("push RIGHT touch button to start the game\n\r");
 			
 				gameStatus = GAMESTOP;
-				while(!test_bit(PINB,PINB2)){}	// if gameButton is pressed - start the game
-				state = INIT;
+				while(!test_bit(PINB,PINB2) & !test_bit(PINB,PINB3)){}	// if gameButton is pressed - start the game
+				if(test_bit(PINB,PINB2))
+					state = INIT;
+				else
+					state = START;
 				break;
 			case INIT:
 				printf("INIT\n\r");		
@@ -64,10 +73,9 @@ void game(void){
 				{				
 					// Test Left Touch button to activate solenoid
 					if(test_bit(PINB,PINB3))
-					{	slider_data.leftbutton = 1; /*printf("button on\n\r");*/
-					}
+					{	slider_data.leftbutton = 1; /*printf("button on\n\r");*/	}
 					else
-					{	slider_data.leftbutton = 0; printf("Button off\n\r");	}
+					{	slider_data.leftbutton = 0;  /*printf("Button off\n\r");*/	}
 			
 					if(CAN_interrupt == 1){
 						game_data = handleCANreceiveInterrupt();
