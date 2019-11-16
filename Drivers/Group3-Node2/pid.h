@@ -14,7 +14,7 @@
 
 #define SCALING_FACTOR 128
 
-// Maximum value of variables
+// Maximum variable value
 #define MAX_INT INT16_MAX
 #define MAX_LONG INT32_MAX
 #define MAX_INTEGRAL_TERM (MAX_LONG / 2)

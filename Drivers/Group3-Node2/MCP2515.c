@@ -60,7 +60,7 @@ void MCP2515_reset( void )
 	_delay_ms(10);
 }
 
-// Status of often used status bits for RX and TX
+
 uint8_t MCP2515_readRxTxStatus()
 {
 	uint8_t status;
@@ -85,11 +85,10 @@ uint8_t MCP2515_readRXstatus()
 		return status;
 }
 
-// Request-to-Send TX0-2 or all
+// Request-to-Send TX 0, 1 ,2 or all buffer messages
 void MCP2515_RTS(uint8_t TXn)
 {
 	SPI_SlaveSelect();
-	//SPI_write(MCP_WRITE);
 	SPI_write(TXn);
 	SPI_SlaveDeselect();
 }
@@ -115,31 +114,20 @@ void MCP2515_bitMask(uint8_t reg, uint8_t bitMask, uint8_t data)
 	SPI_SlaveSelect();
 	SPI_write(MCP_BITMOD);
 	SPI_write(reg);
-	SPI_write(bitMask); //
+	SPI_write(bitMask);
 	SPI_write(data);
 	SPI_SlaveDeselect();
 }
 
 void MCP2515init( uint8_t MODE )
 {
-	uint8_t state;
 	MCP2515_reset();
 	
-	state = MCP2515_readStatus(MCP_CANSTAT);
-	printf("CANSTAT: %x\n\r", state);
+	 // Disable interrupt error flags and Enable TX0 and RX0 Interrupt
+	MCP2515_bitMask(MCP_CANINTE, 0xff ,0x03);
 	
-	if (state & MODE_MASK != MODE_CONFIG)
-	{
-		printf("MCP2515 NOT in configuration mode!\n\r");
-	}
-
-	MCP2515_bitMask(MCP_CANINTE, 0xff ,0x03); // Disable WAKEUP and TXB Interrupt and Enable RX0 Interrupt
-	//MCP2515_bitMask(MCP_CANINTE, 0xff ,0xa3); // Enable ERROR and RX interrupts
-	MCP2515_Write(MCP_CANCTRL,MODE); // Enable loopback mode for testing
-	
-	state = MCP2515_readStatus(MCP_CANSTAT);
-	printf("\n\nCANSTAT: %x\n\n\r", state);
-	
+	// Set MODE
+	MCP2515_Write(MCP_CANCTRL,MODE);
 }
 
 
@@ -149,7 +137,7 @@ void CAN_Write(char adr, CAN_message_t* data)
 	SPI_SlaveSelect();
 
 	SPI_write(MCP_WRITE);
-	SPI_write(adr);		// Send ADDRESS
+	SPI_write(adr);
 	SPI_write(data->ID);
 	SPI_write(data->length);
 	for(int i = 0; i < data->length; i++)
@@ -169,7 +157,7 @@ uint8_t CAN_Read( void )
 	SPI_write(MCP_READ);
 	SPI_write(MCP_READ_RX0);
 	
-	data = SPI_read();	// Receive data
+	data = SPI_read();
 	
 	SPI_SlaveDeselect();
 	

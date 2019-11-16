@@ -13,76 +13,55 @@
 #include "MCP2515.h"
 #include "CAN.h"
 
-	uint8_t messageCount = 0x00;
+uint8_t messageCount = 0x00;
 
 void sendCANmessage(CAN_message_t* data)
 {
-	uint8_t IDlow, IDhigh, status, nrOfBytes;
-
-	status = MCP2515_readStatus(MCP_TXB0CTRL);
-	//printf("TX status: %x\n\n\r", status);
-	
-	//while ( (status & 0x08) ) printf("Waiting for TX0 buffer\n\r"); // CHANGE THIS WHILE LOOP, MCU gets stuck in here
-	
+	uint8_t IDlow, IDhigh, msgLength;
 	
 	uint16_t ID = data->ID;
-	IDlow = 0x00;		// RXB0IDL does not work .. Therfore we can not send IDlow - Send 0x00.
-	IDhigh = ID << 5;		// IDlow does not work .. Use RX0BIDH to read Send and Receive ID. Left shift 5 places to shift bit 0, 1, and 2 up to IDbit 8, 9, and 10.
+	IDlow = 0x00;			// IDlow has faulty behavior - Stuck at constant value - The register is ignored
+	IDhigh = ID << 5;		// Left shift 5 places to shift bit 0, 1, and 2 up to IDbit 8, 9, and 10.
 	
 	
 	_delay_ms(1);
-	MCP2515_Write(MCP_TXB0SIDH, IDhigh);	// TXBnBASE + offset = MCP_TXBnSIDH
-	MCP2515_Write(MCP_TXB0SIDL, IDlow);	// TXBnBASE + offset = MCP_TXBnSIDL
-
+	MCP2515_Write(MCP_TXB0SIDH, IDhigh);
+	MCP2515_Write(MCP_TXB0SIDL, IDlow);
+	MCP2515_Write(MCP_TXB0DLC, data->length);
 	
-
-	
-	MCP2515_Write(MCP_TXB0DLC, data->length);	// TXBnBASE + offset = MCP_TXBnDLC
-	nrOfBytes = data->length;
-	//printf("nrOfBytes : %d",nrOfBytes);
-	
-	for(uint8_t byte = 0; byte < nrOfBytes; byte++)
+	for(uint8_t byte = 0; byte < data->length; byte++)
 	{
-		MCP2515_Write(MCP_TXB0Dm+byte, data->msg[byte]);	// TXBnBASE + offset = MCP_TXBnDm
+		MCP2515_Write(MCP_TXB0Dm+byte, data->msg[byte]);
 	}
 
 	// Request to send
 	MCP2515_RTS(MCP_RTS_TX0);
-	MCP2515_bitMask(MCP_CANINTF, MCP_TX0IF, 0x00);
 }
 
 
 
-void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
+void receiveCANmesssage( CAN_message_t* data)
 {
-	uint16_t ID;
-	uint8_t IDlow, IDhigh, data_length_code, nrOfBytes, status;
+	uint8_t IDlow, IDhigh, DLC;
 
-	IDhigh = MCP2515_Read(MCP_RXB0SIDH);	// RXBnBASE + offset = RXBnSIDH
-	//IDlow = MCP2515_Read(MCP_RXB0SIDL);		// RXBnBASE + offset = RXBnSIDL ---- IDlow does not work
+	IDhigh = MCP2515_Read(MCP_RXB0SIDH);
 	
 	
-
-	//data->ID = /*(IDhigh << 8) |*/ IDlow; ---- ID low does not work
-	data->ID = IDhigh >> 5; // shift received ID right 5 places to give correct ID in bit 0, 1, and 2 
-	//printf("ID received: %x\n\r", data->ID);
+	// IDlow has faulty behavior - Stuck at constant value - The register is ignored
+	data->ID = IDhigh >> 5; // shift ID right 5 places to give correct ID in bit 0, 1, and 2 
 
 
 	
-	data_length_code = MCP2515_Read(MCP_RXB0DLC);	// RXBnBASE + offset = MCP_RXBnDLC
-	nrOfBytes = data_length_code & 0b1111;
+	DLC = MCP2515_Read(MCP_RXB0DLC);
 	
-	data->length = data_length_code & 0b1111;
-	//printf("nrOfBytes : %d",nrOfBytes);
+	data->length = DLC & 0b1111;
 	
-	for(uint8_t byte = 0; byte < nrOfBytes; byte++)
+	for(uint8_t byte = 0; byte < data->length; byte++)
 	{
-		data->msg[byte] = MCP2515_Read(MCP_RXB0DM+byte);	// RXBnBASE + offset = MCP_RXBnDm
+		data->msg[byte] = MCP2515_Read(MCP_RXB0DM+byte);
 	}
 	
-	/*status = MCP2515_readStatus(MCP_CANINTF);
-	printf("CANINTF RECEIVE: %x\n\n\r", status);*/
-	
+	// Set RX interrupt flag low
 	MCP2515_bitMask(MCP_CANINTF, MCP_RX0IF, 0x00);
 }
 

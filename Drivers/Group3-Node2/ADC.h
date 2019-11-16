@@ -10,7 +10,6 @@
 #define ADC_H_
 
 
-
 #include <avr/io.h>
 #include <string.h>
 #include <avr/common.h>
@@ -25,12 +24,7 @@
 #include <avr/pgmspace.h>
 
 
-
 void ADCinit( void );
 uint16_t readADC( void );
-
-
-
-
 
 #endif /* ADC_H_ */

@@ -16,7 +16,7 @@ typedef struct {
 }CAN_message_t;
 
 void sendCANmessage(CAN_message_t* data);
-void receiveCANmesssage( CAN_message_t* data, uint8_t reg );
+void receiveCANmesssage( CAN_message_t* data);
 
 
 

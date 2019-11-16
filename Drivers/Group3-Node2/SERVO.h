@@ -11,8 +11,8 @@
 
 #include <stdbool.h>
 #include <avr/common.h>
+#include <avr/delay.h>
 
-// Flag set if servo is inverted
 int invertFlag;
 
 

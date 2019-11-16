@@ -22,9 +22,7 @@ typedef struct{
 	motor_direction_t direction;
 	}motor_t;
 	
-	
 	motor_t motor;
-
 
 
 void motorDriverInit( void );
@@ -33,8 +31,5 @@ void setMotorSpeed( bool, uint8_t );
 void setMotorDirection( bool, uint8_t );
 uint16_t motorCalibrate( void );
 void motorDriver( void );
-
-
-
 
 #endif /* MOTOR_H_ */

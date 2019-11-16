@@ -23,14 +23,12 @@
 #include "MOTOR.h"
 
 
-
-
 void pidInit( void )
 {
 	pid.integral = 0;
 	pid.lastError = 0;	
 	
-	// Constant factors is multiplied by 128 because the final sum will be divided by 128
+	// Multiply constant factors by 128 because the final sum will be divided by 128
 	pid.kp = kP*SCALING_FACTOR;
 	pid.ki = kI*SCALING_FACTOR;
 	pid.kd = kD*SCALING_FACTOR;
@@ -42,8 +40,6 @@ void pidInit( void )
 
 void pid_controller(void)
 {
-
-
 	int16_t p_term, d_term;
 	int32_t i_term, temp;
 	
@@ -53,10 +49,10 @@ void pid_controller(void)
 		pid.targetPosition = motor.targetPosition;
 
 	
-	// Current position - Right = 0, left = approx 8500
 	pid.currentPosition = encoderRead();
 	
-	if(pid.currentPosition <= 36 & motor.direction == UP)
+	//???
+	if(pid.currentPosition <= 36 & motor.direction == RIGHT)
 	pid.currentPosition = 36;
 	
 	
@@ -64,15 +60,13 @@ void pid_controller(void)
 	
 	
 	if(pid.currentPosition > 1400)
-		{ pid.currentPosition = 1;  motor.direction == DOWN; }
-	//printf("\n\rCurrentPosition: %d\n\r",pid.currentPosition);
+		{ pid.currentPosition = 1;  motor.direction == LEFT; }
 	
 	pid.error = pid.targetPosition - pid.currentPosition;
-	//printf("error: %d\n\r",pid.error);
 	
 	
 	
-	// Calculate Pterm and limit error overflow
+	// Calculate P_term and limit error overflow
 	if(pid.error > pid.maxError)
 		p_term = MAX_INT;
 	else if (pid.error < -pid.maxError)
@@ -82,7 +76,7 @@ void pid_controller(void)
 
 
 
-	// Calculate Iterm and limit integral runaway
+	// Calculate I_term and limit integral runaway
 	temp=pid.integral+pid.error;
 	if(temp > pid.maxIntegral){
 		i_term = MAX_INTEGRAL_TERM;
@@ -95,29 +89,29 @@ void pid_controller(void)
 		i_term = pid.ki*pid.integral;	
 	}
 	
-	// calculate Dterm
+	// calculate D_term
 	d_term = pid.kd*(pid.previousPosition - pid.currentPosition);
 	
 	pid.previousPosition = pid.currentPosition;
 	
 	pid.distance = (p_term + i_term + d_term) / SCALING_FACTOR;
-		//printf("P_term: %d\n\r", p_term);
-		//printf("i_term: %d\n\r", i_term);
-		//printf("d_term: %d\n\r", d_term),
-		//printf("distance: %d\n\r", pid.distance);
+
 		
-	// distance must be around 55 in order for the motor to move, due to friction.
+	// Note to self: distance must be around 55 in order for the motor to move, due to friction.
 	if(pid.distance < -120)
-		{ motor.speed = 150; motor.direction = UP; }
+		{ motor.speed = 150; motor.direction = RIGHT; }
 	else if (pid.distance > 100)
-		{ motor.speed = 150; motor.direction = DOWN; }
+		{ motor.speed = 150; motor.direction = LEFT; }
 	else
 		{
 		if(pid.distance > 0)
-			{ motor.speed = pid.distance*3; motor.direction = DOWN; }
+			{ motor.speed = pid.distance*3; motor.direction = LEFT; }
 		else if (pid.distance < 0)
-			{ motor.speed = -pid.distance*3; motor.direction = UP; }
+			{ motor.speed = -pid.distance*3; motor.direction = RIGHT; }
 		else // pid.distance == 0
 			motor.speed	= 0;
 		}
 }
+
+
+

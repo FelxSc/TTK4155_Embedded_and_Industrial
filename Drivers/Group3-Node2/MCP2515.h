@@ -9,21 +9,8 @@
 #ifndef __MCP2515_H
 #define __MCP2515_H
 
-#include "CAN.h"
-
-/*
-mcp2515.h
-
-This file contains constants that are specific to the MCP2515.
-
-Version     Date        Description
-----------------------------------------------------------------------
-v1.00       2003/12/11  Initial release
-
-Copyright 2003 Kimberly Otten Software Consulting
-*/
-
 #include <string.h>
+#include "CAN.h"
 
 
 void MCP2515_cmd(char cmd);
@@ -43,6 +30,17 @@ void MCP2515_bitMask(uint8_t reg, uint8_t bitMask, uint8_t data);
 
 
 
+/*
+mcp2515.h
+
+This file contains constants that are specific to the MCP2515.
+
+Version     Date        Description
+----------------------------------------------------------------------
+v1.00       2003/12/11  Initial release
+
+Copyright 2003 Kimberly Otten Software Consulting
+*/
 
 // Define MCP2515 register addresses
 
