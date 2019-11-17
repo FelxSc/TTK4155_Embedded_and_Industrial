@@ -83,7 +83,7 @@ void game(void){
 					}
 			
 					if(Timer1_interrupt)
-						SendTimer1CANmsg();
+						{ SendTimer1CANmsg(); OLEDScoreCounter(); }
 					//printf("gametimer: %d",gameTimer);
 				
 					_delay_ms(50);

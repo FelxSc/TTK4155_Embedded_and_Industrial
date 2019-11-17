@@ -43,40 +43,43 @@ void setRightSibling(menu_t* thisChild, menu_t* rightSibling)	// Make sure this 
 
 void menuInit( void )
 {
-	// Create a list of all the menu options in Main Menu
+	// Create list of menu options in Main Menu
 	menu_t* mainMenu = createMenu("Main Menu", NULL, MAIN_MENU);
-	menu_t* playgame = createMenu("Play Game", mainMenu, PLAYGAME);
+	menu_t* game = createMenu("Game", mainMenu, GAME);
 	menu_t* options = createMenu("Options", mainMenu, OPTIONS);
-	menu_t* highscores = createMenu("Highscores", mainMenu, HIGSCORES);
+	menu_t* graphics = createMenu("Graphics??", mainMenu, GRAPHICS);
+	menu_t* music = createMenu("Music??", mainMenu, MUSIC);
 	
-	// Create a list of all the menu options in menu1 - PLAY GAME
-		
-	// Create a list of all the menu options in menu2 - OPTIONS
-	menu_t* difficulty = createMenu("Difficulty", options,DIFFICULTY);
+	// Create list of menu options in Game
+	menu_t* playgame = createMenu("Play Game", game, PLAYGAME);
+	menu_t* difficulty = createMenu("Difficulty", game, DIFFICULTY);
+	menu_t* highscore = createMenu("Highscore", game, HIGHSCORE);
+	
+	// Create list of menu options in options
 	menu_t* brightness = createMenu("Brightness", options, BRIGHTNESS);
+	menu_t* changeFont = createMenu("Change Font", options, CHANGEFONT);
+	menu_t* PIDtuner = createMenu("PID Tuner", options, PIDTUNER);
+	menu_t* motorSpeed = createMenu("Motor Speed", options, MOTORSPEED);
+	menu_t* credits = createMenu("Credits", options, CREDITS);
 	
-	// Create a list of all the menu options in menu3 - HIGHSCORES
-	menu_t* test1 = createMenu("TEST1", highscores, TEST1);
-	menu_t* test2 = createMenu("TEST2", highscores, TEST2);
-	menu_t* test3 = createMenu("TEST3", highscores, TEST3);
-	menu_t* test4 = createMenu("TEST4", highscores, TEST4);	
 		
-	// Link Main Menu-options together to form a list - firstChild then rightSibling
-	setFirstChild(mainMenu, playgame);
-	setRightSibling(playgame, options);
-	setRightSibling(options, highscores);
+	// Link Main Menu - firstChild then rightSibling
+	setFirstChild(mainMenu, game);
+	setRightSibling(game, options);
+	setRightSibling(options, graphics);
+	setRightSibling(graphics, music);
 	
-	// Link Menu 1 options together to form a list - firstChild then rightSibling
-	
-	// Link Menu 2 options together to form a list - firstChild then rightSibling
-	setFirstChild(options, difficulty);
-	setRightSibling(difficulty, brightness);
-	
-	// Link Menu 3 options together to form a list - firstChild then rightSibling
-	setFirstChild(highscores, test1);
-	setRightSibling(test1, test2);
-	setRightSibling(test2, test3);
-	setRightSibling(test3, test4);
+	// Link Game - firstChild then rightSibling
+	setFirstChild(game, playgame);
+	setRightSibling(playgame, difficulty);
+	setRightSibling(difficulty, highscore);
+
+	// Link Options - firstChild then rightSibling
+	setFirstChild(options, brightness);
+	setRightSibling(brightness, changeFont);
+	setRightSibling(changeFont, PIDtuner);
+	setRightSibling(PIDtuner, motorSpeed);
+	setRightSibling(motorSpeed, credits);
 		
 	currentMenu = mainMenu;
 	drawMenu(currentMenu);
@@ -122,7 +125,6 @@ void drawMenu(menu_t* menu)	// pointer to the selected function
 			{
 				OLEDGotoPosition(currentLine,2);
 				OLEDprintArrowRight();
-				//OLEDGotoPosition(currentLine,strlen(menu->title)*8);
 				OLEDinvPrintf(menu->title);
 				OLEDprintArrowLeft();
 			}
@@ -144,7 +146,6 @@ void gotoMenuFunction(menu_t* menu)
 	{
 		case MAIN_MENU: printf("Main Menu function"); break;
 		case PLAYGAME: printf("play game"); game(); break;
-		case TEST1: printf("test1 function"); break;
 		case BRIGHTNESS: printf("Brightness"); OLEDContrast(); break;  
 		default: printf("Unknown Menu"); break;
 	}
@@ -174,7 +175,6 @@ selectedMenu_t selectMenu()
 			if(currentMenu->parent != NULL)
 				currentMenu = currentMenu->parent;
 			drawMenu(currentMenu);
-			
 			break;
 		case RIGHT:
 			if (currentMenu->firstChild != NULL)
@@ -185,16 +185,19 @@ selectedMenu_t selectMenu()
 					
 				currentLine = 1; // sets the cursor to the first line in the new menu window
 				drawMenu(currentMenu);
-			}	
+			}				
 			break;
-		default:
-			// If direction = CENTER - Do nothing
+		default: break; // If direction = CENTER - Do nothing
+		
+		
+
+
+	}
+		printf("currentMenu->firstChild: %d", currentMenu->firstChild);
+		
 		if(joystickButtonInterrupt == 1 && (currentMenu->firstChild == NULL))
-			{	joystickButtonInterrupt = 0; gotoMenuFunction(&currentMenu);	}
-			
+			{	printf("hei"); joystickButtonInterrupt = 0; gotoMenuFunction(&currentMenu);	}
+		
 		return currentLine;
 		
-	}
-	
-	
 }

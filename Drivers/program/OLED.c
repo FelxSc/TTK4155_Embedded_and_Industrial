@@ -28,6 +28,7 @@
 #include "OLED.h"
 #include "JOYSTICK.h"
 #include "bitMacro.h"
+#include "Interrupt.h"
 
 
 static FILE mystdout = FDEV_SETUP_STREAM(OLEDPrint, NULL, _FDEV_SETUP_WRITE);				
@@ -36,7 +37,7 @@ static FILE myinvstdout = FDEV_SETUP_STREAM(OLEDinvertedPrint, NULL, _FDEV_SETUP
 volatile uint8_t* extOledCmd = (uint8_t*) OLED_COMMAND_ADDRESS;
 volatile uint8_t* extOledData = (uint8_t*) OLED_DATA_ADDRESS;
 
-extern OLED_t OLEDpos = {0,0, 80};
+extern OLED_t OLEDpos = {0,0, 64, 62};
 
 void write_c(uint8_t command)
 {
@@ -55,7 +56,10 @@ void OLEDGotoLine(uint8_t line)
 		write_c(0xB0 + line); // B0 - B7 <- page address  --  8 lines per page
 		write_c(0x00);
 		write_c(0x10);
+		
+		OLEDpos.line = line;
 	}
+	
 }
 
 void OLEDGotoColumn(uint8_t column)
@@ -67,6 +71,8 @@ void OLEDGotoColumn(uint8_t column)
 		
 		write_c(LowerColumn);
 		write_c(HigherColumn);
+		
+		OLEDpos.column = column;
 	}
 }
 
@@ -194,7 +200,7 @@ void OLEDInit(void)
 	write_c(0xd5);        // display  divide ratio/osc. freq. mode, it is set next line
 	write_c(0x80);        // Value of display divide ratio/osci: A[7:4] Osci. Frequency, A[3:0] display clock divide ratio
 	write_c(0x81);        // contrast  control
-	write_c(0x50);        // Value of contrast
+	write_c(0x40);        // Value of contrast
 	write_c(0xd9);        // set  pre-charge  period
 	write_c(0x21);        // Value of pre-charge period: A[7:4] Phase 2 period of up to 15 DCLK, A[3:0] Phase 1 period of up to 15 DCLK
 	write_c(0x20);        // Set  Memory  Addressing  Mode
@@ -229,35 +235,52 @@ void OLEDPrint(uint8_t data)
 
 void OLEDContrast(void)
 {
-	OLEDcreateBar();
 	
 	OLEDGotoPosition(3,0);
 	OLEDPrintf("Use joystick!");
 	OLEDGotoPosition(4,0);
 	OLEDPrintf("Keep brightness?");
 	OLEDGotoPosition(5,0);
-	OLEDPrintf("Press r. button");
+	//OLEDPrintf("Press");
 	OLEDcreateBar();
 	
-	{
+	do{
 		joystickDriver();
-		
-		if(joystick_data.joystickPosition == UP && OLEDpos.column < 115)
+		//printf("Column : %d", OLEDpos.column);
+		if(joystick_data.joystickPosition == RIGHT && OLEDpos.column < 115)
 		{
+			if(OLEDpos.column < 11)
+				{ OLEDpos.column = 11; OLEDGotoColumn(OLEDpos.column); }			
+			
+			OLEDpos.brightness++;
+			
+			//printf("Joystick Up = %d", joystick_data.joystickPosition);
 			write_c(0x81);
-			write_c((++OLEDpos.brightness));
+			write_c(OLEDpos.brightness);
 			write_d(0b11111111);
-			OLEDGotoColumn(OLEDpos.column++);
+			
+			OLEDpos.column++;
+			OLEDGotoColumn(OLEDpos.column);
 		}
-		else if(joystick_data.joystickPosition == DOWN && OLEDpos.column > 14 )
+		else if(joystick_data.joystickPosition == LEFT && OLEDpos.column > 13 )
 		{
+			//printf("Joystick Down = %d", joystick_data.joystickPosition);
+			if(OLEDpos.column > 114)
+				{ OLEDpos.column = 113; OLEDGotoColumn(OLEDpos.column); }
+				
+			OLEDpos.brightness--;
+			
 			write_c(0x81);
-			write_c(--OLEDpos.brightness);
+			write_c(OLEDpos.brightness);
 			write_d(0b11000011);
-			OLEDGotoColumn(OLEDpos.column--);
+			
+			OLEDpos.column--;
+			OLEDGotoColumn(OLEDpos.column);
 		}
-
+		_delay_ms(100);
 	}while(!test_bit(PINB,PINB3));
+	
+	OLEDpos.LastBrightnessPos = OLEDpos.column;
 
 }
 
@@ -267,11 +290,11 @@ void OLEDcreateBar(void)
 	OLEDGotoPosition(7,12);
 	write_d(0b11111111);
 	write_d(0b11111111);
-	for(int i = 0; i < 50; i++)
+	for(int i = 0; i < (OLEDpos.LastBrightnessPos-12); i++)
 	{
 		write_d(0b11111111);
 	}
-	for(int i = 0; i < 50; i++)
+	for(int i = 0; i < (100-(OLEDpos.LastBrightnessPos-12)); i++)
 	{
 		write_d(0b11000011);
 	}
@@ -279,7 +302,23 @@ void OLEDcreateBar(void)
 	write_d(0b11111111);
 	write_d(0b11111111);
 
-	OLEDGotoPosition(7,14);
+	OLEDGotoPosition(7,OLEDpos.LastBrightnessPos);
+}
+
+
+// Update this function every time the timer interrupt triggers
+void OLEDScoreCounter(void)
+{
+	OLEDClearAll();
+	OLEDGotoPosition(2, 44); // Go to approximately the middle of the screen
+	OLEDPrintf("SCORE");
+	OLEDGotoPosition(4,60);
+	OLEDPrintf("%d", gameTimer); // Print the Score
+}
+
+void OLEDGameOver(void)
+{
+	
 }
 
 /*

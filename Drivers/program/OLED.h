@@ -38,6 +38,7 @@ void OLEDprintArrowRight(void);
 void OLEDprintArrowLeft(void);
 void OLEDcreateBar(void);
 void OLEDContrast(void);
+void OLEDScoreCounter(void);
 
 
 void write_c(uint8_t command);	// write commands to OLED
@@ -49,6 +50,7 @@ typedef struct OLED
 	uint8_t column;
 	//uint8_t fontSize;
 	uint8_t brightness;
+	uint8_t LastBrightnessPos;
 }OLED_t;
 
 OLED_t OLEDpos;

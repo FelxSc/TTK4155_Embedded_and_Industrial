@@ -111,56 +111,14 @@ void main()
 	
 	uint16_t highscore, address;
 	uint8_t highscoreLow, highscoreHigh, scoreLow, scoreHigh;
+	
+	// Main Loop
 	while(1)
 	{
-		//printf("MAINloop - state = %d\n\r",state);
-		
-		/*printf("dataSend: %x\n\r", dataWrite);
-		SRAM_write(adr, dataWrite);
-		//dataWrite++;
-		_delay_ms(20);
-		dataRead = SRAM_read(adr);
-		printf("Address: %x - dataReceive: %x\n\r",adr, dataRead);
-		dataRead = 0;
-		adr++;*/
-		
-		//SRAM_test();
-		
-		
-		/*printf("GAMEOVER");
-		printf("GameTimer: %d\n\r", gameTimer);
-		
-		scoreLow = gameTimer;
-		scoreHigh = gameTimer >> 8;
-		
-		printf("ScoreLow = %x\n\r", scoreLow);
-		printf("ScoreHigh = %x\n\r", scoreHigh);
-		
-			SRAM_write(address, scoreLow);
-			SRAM_write(address+1, scoreHigh);
-
-		// save the highscore to SRAM.
-		highscoreHigh = SRAM_read(address+1);
-		highscoreLow = SRAM_read(address);
-		
-		highscore = ((uint16_t)highscoreHigh << 8) | highscoreLow;
-		
-		
-		//if( gameTimer > highscore ){
-
-		//}
-		printf("highscoreLow: %x\n\r", highscoreLow);
-		printf("highscoreHigh: %x\n\r", highscoreHigh);
-		printf("highscore: %d\n\r", highscore);
-		
-		*/
-		
-		//game();		
-		
 		current_Line = selectMenu();
-			//OLEDClearAll();
+		_delay_ms(300);
+		
 		_delay_ms(20);
-		//_delay_ms(500);
 		
 	}
 }
