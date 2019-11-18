@@ -19,7 +19,17 @@
 #define MAX_PAGES 0x8
 #define MAX_COLUMNS 0x80
 #define MAX_ROWS 0x40
-#define FONTSIZE 8
+
+
+// All used strings have IDs to be able to retrieve them from PROGMEM
+
+/*#define keep_brightness_id	0x00
+#define LB_Return_id	0x01
+#define score_id	0x02
+#define gameover_id	0x03
+#define your_score_id 0x04
+*/
+
 
 void OLEDInit(void);
 void OLEDReset(void);
@@ -29,18 +39,27 @@ void OLEDGotoColumn(uint8_t column);
 void OLEDClearLine(uint8_t line);
 void OLEDClearAll(void);
 void OLEDClearColumn(void);
-void OLEDPrint(uint8_t);
-void OLEDPrintf(char* data, ...);
+int OLEDPrint(unsigned char data);
+int OLEDinvertedPrint(unsigned char data);
+void OLEDprintf(char* data, ...);
 void OLEDinvPrintf(char* data, ...);
 void OLEDGotoPosition(uint8_t line, uint8_t column);
-int OLEDinvertedPrint(unsigned char data);
 void OLEDprintArrowRight(void);
 void OLEDprintArrowLeft(void);
 void OLEDcreateBar(void);
 void OLEDContrast(void);
 void OLEDScoreCounter(void);
+void OLEDGameOver(uint16_t highscore);
+void OLEDNewHighscore(void);
+void OLEDAfterGame(void);
+void OLEDStartGame(void);
+
+//char* get_OLEDString(uint8_t OLEDStringID);
 
 
+
+
+void setFontSize(uint8_t fontsize);
 void write_c(uint8_t command);	// write commands to OLED
 void write_d(unsigned char data);		// write data to OLED
 
@@ -53,6 +72,14 @@ typedef struct OLED
 	uint8_t LastBrightnessPos;
 }OLED_t;
 
-OLED_t OLEDpos;
+//Used for OLEDPrintf - THIS IS JUST FOR TESTING
+static FILE mystdout = FDEV_SETUP_STREAM(OLEDPrint, NULL, _FDEV_SETUP_WRITE);
+#define OLED_p (&mystdout)
+
+static FILE myinvstdout = FDEV_SETUP_STREAM(OLEDinvertedPrint, NULL, _FDEV_SETUP_WRITE);
+#define OLED_invp (&myinvstdout)
+
+
+
 
 #endif // OLED_H

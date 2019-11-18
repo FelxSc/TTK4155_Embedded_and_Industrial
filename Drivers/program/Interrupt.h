@@ -17,16 +17,20 @@ volatile int Timer1_interrupt;
 volatile uint16_t gameTimer;
 
 
-
-void Timer1Init( void );
-void Timer3Init( void );
+void buzzerTimer0Init( void );
+void SendCAN( void );
+void SendCANTimer1Init( void );
+void enableSendCANTimer1( void );
+void disableSendCANTimer1( void );
+void gameTimer3Init( void );
+void Timer3_second( void );
+void Timer3_millisecond( void );
+void enableGameTimer3( void );
+void disableGameTimer3( void );
 void enableGameTimer( void );
 void disableGameTimer( void );
-void InterruptInit( void );
+void receiveCanInterruptInit( void );
 CAN_message_t handleCANreceiveInterrupt( void );
-void SendTimer1CANmsg( void );
-
-
 
 
 

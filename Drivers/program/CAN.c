@@ -53,20 +53,22 @@ void sendCANmessage(CAN_message_t* data)
 
 void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 {
-	uint16_t ID;
-	uint8_t IDlow, IDhigh, data_length_code, nrOfBytes;
+	uint8_t IDhigh, data_length_code, nrOfBytes, status;
 
-	IDhigh = MCP2515_Read(MCP_RXB1SIDH);	// RXBnBASE + offset = RXBnSIDH
+	status= MCP2515_readRXstatus();
+	printf("CAN Stat = %x\n\r", status);
+
+	IDhigh = MCP2515_Read(MCP_RXB0SIDH);	// RXBnBASE + offset = RXBnSIDH
 	//IDlow = MCP2515_Read(MCP_RXB0SIDL);		// RXBnBASE + offset = RXBnSIDL ---- IDlow does not work
 	
 
 	//data->ID = /*(IDhigh << 8) |*/ IDlow; ---- ID low does not work
 	data->ID = IDhigh >> 5; // shift received ID right 5 places to give correct ID in bit 0, 1, and 2 
-	printf("ID received: %x\n\r", data->ID);
+	printf("ID received: %d\n\r", data->ID);
 
 
 	
-	data_length_code = MCP2515_Read(MCP_RXB1DLC);	// RXBnBASE + offset = MCP_RXBnDLC
+	data_length_code = MCP2515_Read(MCP_RXB0DLC);	// RXBnBASE + offset = MCP_RXBnDLC
 	nrOfBytes = data_length_code & 0b1111;
 	
 	data->length = data_length_code & 0b1111;
@@ -74,11 +76,11 @@ void receiveCANmesssage( CAN_message_t* data, uint8_t reg )
 	
 	for(uint8_t byte = 0; byte < nrOfBytes; byte++)
 	{
-		data->msg[byte] = MCP2515_Read(MCP_RXB1DM+byte);	// RXBnBASE + offset = MCP_RXBnDm
+		data->msg[byte] = MCP2515_Read(MCP_RXB0DM+byte);	// RXBnBASE + offset = MCP_RXBnDm
 	printf("msg[%d]: %d\n\r",byte, data->msg[byte]);
 	
 	}
-	//MCP2515_bitMask(MCP_CANINTF, MCP_RX0IF, 0x00);
+	MCP2515_bitMask(MCP_CANINTF, MCP_RX0IF, 0x00);
 	MCP2515_bitMask(MCP_CANINTF, MCP_RX1IF, 0x00);
 
 }

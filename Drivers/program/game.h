@@ -4,6 +4,7 @@
  * Created: 13.11.2019 11:49:30
  *  Author: felixas
  */ 
+#define F_CPU 4915200UL // 4.9152 Mhz
 
 
 #ifndef GAME_H_

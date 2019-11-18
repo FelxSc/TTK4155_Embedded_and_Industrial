@@ -26,9 +26,8 @@ void joystickButtonInit( void )
 {
 	DDRD &= ~(1 << PD3);
 	PORTD |= (1 << PD3);
-	
-	cli();
-		
+
+	cli();		
 	// Interrupt on falling edge
 	MCUCR &= ~(1<<ISC10);
 	MCUCR |= (1<<ISC11);
@@ -36,24 +35,16 @@ void joystickButtonInit( void )
 		
 	// Enable Interrupt on PD3
 	GICR |= (1<<INT1);
-		
-	// Enable global interrupts
 	sei();
-	
 }
 
 
 void sliderDriver()
 {
-	//uint8_t leftSliderData, rightSliderData;
-	slider_data.leftslider = getADCdata(CHANNEL1);	//Left slider
-	printf("ServoSlider: %d",slider_data.leftslider);
-	//printf("\n\rLeft slider: %d \n\r", leftSliderData);
-	
-	
-	slider_data.rightslider = getADCdata(CHANNEL2);	// Right slider
-	//printf("Right slider: %d \n\r", rightSliderData);
+	slider_data.leftslider = getADCdata(CHANNEL1);
+	slider_data.rightslider = getADCdata(CHANNEL2);
 }
+
 
 joystick_direction_t get_joystick_direction(uint8_t joyst_coord_X, uint8_t joyst_coord_Y)
 {
@@ -65,67 +56,30 @@ joystick_direction_t get_joystick_direction(uint8_t joyst_coord_X, uint8_t joyst
 	signed_joyst_coord_Y = joyst_coord_Y - 128;
 	abs_signed_joyst_coord_X = abs(signed_joyst_coord_X);
 	abs_signed_joyst_coord_Y = abs(signed_joyst_coord_Y);
-	
-	/*printf("signed X = %d\n\r", signed_joyst_coord_X);
-	printf("signed Y = %d\n\r", signed_joyst_coord_Y);
-	printf("abs signed X = %d\n\r", abs_signed_joyst_coord_X);
-	printf("abs signed Y = %d\n\r", abs_signed_joyst_coord_Y);
-	_delay_ms(4000);*/
-	
 		
-	if (abs_signed_joyst_coord_X <= JOYSTICK_THRESOLD && abs_signed_joyst_coord_Y <= JOYSTICK_THRESOLD){
+	if (abs_signed_joyst_coord_X <= JOYSTICK_THRESOLD && abs_signed_joyst_coord_Y <= JOYSTICK_THRESOLD)
 		return CENTER;
-	}
-	
-	if (signed_joyst_coord_X > abs_signed_joyst_coord_Y )
-	return RIGHT;
+	else if (signed_joyst_coord_X > abs_signed_joyst_coord_Y )
+		return RIGHT;
 	else if (signed_joyst_coord_X < - abs_signed_joyst_coord_Y)
-	return LEFT;
+		return LEFT;
 	else if (signed_joyst_coord_Y > abs_signed_joyst_coord_X)
-	return UP;
+		return UP;
 	else
-	return DOWN;
+		return DOWN;
 	
 }
 
 // When joystick is centered the measured center value will be the offset
 void joystickCalibrate( void )
 {
-	joystickCalibration.x_offset = getADCdata(CHANNEL4); //X axis on channel 4
-	joystickCalibration.y_offset = getADCdata(CHANNEL3); //Y axis on channel 3
+	joystickCalibration.x_offset = getADCdata(CHANNEL4); //X axis
+	joystickCalibration.y_offset = getADCdata(CHANNEL3); //Y axis
 }
 
 void joystickDriver()
 {
-	joystick_data.x_position = getADCdata(CHANNEL4); //X axis on channel 4
-	joystick_data.y_position = getADCdata(CHANNEL3); //Y axis on channel 3
-	
-	
-	//joystick_direction_t joyst_direction; //The value should be: CENTER/LEFT/RIGHT/DOWN/UP
+	joystick_data.x_position = getADCdata(CHANNEL4); //X axis
+	joystick_data.y_position = getADCdata(CHANNEL3); //Y axis
 	joystick_data.joystickPosition = get_joystick_direction(joystick_data.x_position, joystick_data.y_position);
-	
-	
-	/*switch(joystick_data.joystickPosition){
-		case CENTER:
-		printf("CENTER\n\r");
-		break;
-		case LEFT:
-		printf("LEFT\n\r");
-		break;
-		case RIGHT:
-		printf("RIGHT\n\r");
-		break;
-		case DOWN:
-		printf("DOWN\n\r");
-		break;
-		case UP:
-		printf("UP\n\r");
-		break;
-		default:
-		printf("The function get_joystick_direction is not returning one of these: CENTER/LEFT/RIGHT/DOWN/UP\n\r");
-		
-	}
-	printf("Joystick X = %d \n\r", joystick_data.x_position);
-	printf("Joystick Y = %d \n\r", joystick_data.y_position);
-	*/
 }

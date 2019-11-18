@@ -24,6 +24,8 @@ typedef struct joystick_data
 */
 
 void adcInit( void );
+void select_ADC_channel(channel_t channel);
+uint8_t getADCdata(channel_t channel);
 
 
 #endif // ADC_H

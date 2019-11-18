@@ -134,6 +134,8 @@ void MCP2515init( uint8_t MODE )
 	}
 
 	MCP2515_bitMask(MCP_CANINTE, 0xff ,0x03); // Disable WAKEUP and TXB Interrupt
+	MCP2515_bitMask(MCP_RXB0CTRL, 0x64 ,0x60); // Turn mask filters off - Rollover disabled
+	
 	//MCP2515_bitMask(MCP_CANINTE, 0xff ,0xa3); // Enable ERROR and RX interrupts
 	MCP2515_Write(MCP_CANCTRL,MODE); // Enable loopback mode for testing
 	

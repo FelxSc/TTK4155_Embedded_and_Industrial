@@ -2,11 +2,12 @@
 #define MENU_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 
 
 typedef enum{
-	MAIN_MENU, GAME, OPTIONS, GRAPHICS, MUSIC, PLAYGAME, DIFFICULTY, EASY, NORMAL, HARD, HIGHSCORE, BRIGHTNESS, CHANGEFONT, PIDTUNER, MOTORSPEED, CREDITS, RESETSCORE
+	MAIN_MENU, GAME, OPTIONS, GRAPHICS, MUSIC, PLAYGAME, DIFFICULTY, EASY, NORMAL, HARD, HIGHSCORE, BRIGHTNESS, CHANGEFONT, PIDTUNER, MOTORSPEED, CREDITS, RESETSCORE, ZELDA
 } selectedMenu_t;
 
 // Menu structure as the LeftChild-RightSibling (LCRS)
@@ -21,7 +22,7 @@ typedef struct{
 
 
 void menuInit( void );
-selectedMenu_t selectMenu();
+void selectMenu( void );
 void drawMenu(menu_t* menu);
 
 

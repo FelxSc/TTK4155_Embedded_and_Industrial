@@ -24,7 +24,9 @@
 #include "MCP2515.h"
 #include "game.h"
 
-void InterruptInit( void )
+
+
+void receiveCanInterruptInit( void )
 {
 	DDRD &= ~(1<<PD2); // MCP2515 interrupt
 	
@@ -43,8 +45,29 @@ void InterruptInit( void )
 }
 
 
+void buzzerTimer0Init( void )
+{
+	DDRB |= ( 1<< PB0);
 
-void Timer1Init( void )
+	cli();
+	// Set normal mode fastPWM - Toggle OC0 on Compare Match - No Prescaling
+	TCCR0 |= (1 << WGM01) | (1 << COM00) | (1 << CS01);// | (1 << CS00);
+	//TCCR0 &= ~((1 << WGM00) | (1 << CS01) | (1 << FOC0));
+	
+	// Initial compare value
+	OCR0 = 10;
+
+	// Enable TIMER0 Interrupt
+	TIMSK |= (1 << OCIE0);
+	
+	// Initiate OCF0 flag as cleared
+	TIFR &= ~(1 << OCF0);
+	sei();
+}
+
+
+//Send CAN message
+void SendCANTimer1Init( void )
 {
 	// Set normal mode
 	TCCR1A = 0x00;
@@ -60,98 +83,123 @@ void Timer1Init( void )
 	
 }
 
-void Timer3Init( void )
+void SendCAN( void )
 {
+	cli();
+	Timer1_interrupt = 0;
+	CAN_message_t data;
+	sliderDriver();
+	
+	data.ID = 1;
+	data.msg[0] = slider_data.leftslider; // Servo data -> dutycycle
+	data.msg[1] = slider_data.rightslider; // motor position data
+	data.msg[2] = slider_data.leftbutton;
+	data.msg[3] = gameStatus;
+	data.msg[4] = 0;
+	data.msg[5] = 0;
+	data.msg[6] = 0;
+	data.msg[7] = '\0';
+	data.length = 8;
+	
+	sendCANmessage(&data);
+	
+	sei();
+}
+
+void enableSendCANTimer1( void )
+{
+	// Control register: Prescale: 8
+	TCCR1B = 0x02;
+}
+
+void disableSendCANTimer1( void )
+{
+	// Control register: Timer/Counter stopped
+	TCCR1B = 0x00;
+}
+
+
+
+// Game timer increases scorePoints every second
+void gameTimer3Init( void )
+{
+	cli();
 	// Set normal mode
 	TCCR3A = 0x00;
 	
 	// Control register: Prescale = 1024
 	TCCR3B = 0x0D;
+			// Control register: Prescale: 1
+			//TCCR3B |= (1 << WGM32) | (1 << CS32) | (1 << CS30);
+			//TCCR3B &= ~(1 << CS31);
 	
 	// Output Compare register Value = 4800 tick/sec
 	OCR3AH = 0x12;
 	OCR3AL = 0xc0;
+	//		OCR3AH = 0x13;
+	//		OCR3AL = 0x33;
 	
-	// disable TIMER3 Output Compare Interrupt
-	//ETIMSK &= ~(1 << OCIE3A);
+	//		OCR3AH = 0x00;
+	//		OCR3AL = 0x05;
+
 	ETIMSK |= (1<<OCIE3A);
-	//enableGameTimer();
 	
 	// Initiate TOV3 flag as cleared
 	ETIFR = 0x00;
-	
+	sei();
 }
 
-void enableGameTimer( void )
+void Timer3_millisecond(void)
+{		cli();
+		// Control register: Prescale: 1
+		//TCCR3B |= (1 << WGM32) | (1 << CS30);
+		//TCCR3B &= ~(1 << CS31) | (1 << CS32);
+		
+		// Output Compare register Value = 4800 tick/sec
+		OCR3AH = 0x00;
+		OCR3AL = 0x05;
+		sei();
+}
+void Timer3_second(void)
+{
+		// Control register: Prescale: 1024
+		TCCR3B = 0x0D;
+		// Output Compare register Value = 4800 tick/sec
+		OCR3AH = 0x12;
+		OCR3AL = 0xc0;
+}
+
+// Start counting score
+void enableGameTimer3( void )
 {
 	cli();
-	// Enable TIMER3 Output Compare Interrupt
-	ETIMSK |= (1 << OCIE3A);
 	
-	// Initiate TOV3 flag as cleared
-	ETIFR = 0x00;
+	TCCR3B = 0x0D;					// Control register: Prescale = 1024
+	ETIMSK |= (1 << OCIE3A);		// Enable TIMER3 Output Compare Interrupt
+	
+	ETIFR = 0x00;					// Initiate TOV3 flag as cleared
 	sei();	
 }
 
-void disableGameTimer( void )
+
+// Stop counting score
+void disableGameTimer3( void )
 {
 	cli();
-	// disable TIMER3 Output Compare Interrupt
-	ETIMSK &= ~(1 << OCIE3A);
+	
+		TCCR3B = 0x08;					// Control register: Timer/Counter stopped
+		ETIMSK &= ~(1 << OCIE3A);		// disable TIMER3 Output Compare Interrupt
 	sei();
 }
 
 
-void SendTimer1CANmsg( void )
- {
-	 Timer1_interrupt = 0;
- 		CAN_message_t data;
-		 sliderDriver();
-		 
-		 data.ID = 1;
-		 data.msg[0] = slider_data.leftslider; // Servo data -> dutycycle
-		 data.msg[1] = slider_data.rightslider; // motor position data
-		 data.msg[2] = slider_data.leftbutton;
-		 data.msg[3] = gameStatus;
-		 data.msg[4] = '0';
-		 data.msg[5] = '0';
-		 data.msg[6] = '0';
-		 data.msg[7] = '\0';
-		 data.length = 8;
-		 
-		  
-	 	//printf("\n\n\r************SENDING MSG: data *************\n\r");
 
-	 	// CAN struct test
-	 	/*printf("ID: %d\n\r",data.ID);
-	 	printf("X position: %d\n\r", data.msg[0]);
-	 	printf("Y position: %d\n\r", data.msg[1]);
-	 	printf("Button: %d\n\r", data.msg[2]);
-	 	printf("msgLen: %d\n\r",data.length);*/
-	 	sendCANmessage(&data);
-		 
-		//printf("TX status: %x",MCP2515_readRxTxStatus());
- }
- 
  CAN_message_t handleCANreceiveInterrupt()
  {
 	 CAN_interrupt = 0;
-	 printf("\n\nr\rCAN Interrupt");
-	 
 	 CAN_message_t receivedCAN1;
 	 
-	 //CAN_message_t * receivedCAN1 = malloc(sizeof(CAN_message_t));
-	 //CAN_message_t * receivedCAN2 = malloc(sizeof(CAN_message_t));
-	 
-	 //receivedCAN1 = received1;
-	 //receivedCAN2 = received2;
-	 uint8_t status;
-	 
-	 // Interrupt status
-	 status = MCP2515_Read(MCP_CANINTF);
-	 printf("\n\rCANINTF : %x\n\n\r", status);
-	 cli();
 	 receiveCANmesssage(&receivedCAN1, 0x60);
-	 sei();
+	 
 	 return receivedCAN1;
  }

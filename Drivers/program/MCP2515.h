@@ -118,9 +118,9 @@ void MCP2515_bitMask(uint8_t reg, uint8_t bitMask, uint8_t data);
 #define MCP_TXB0SIDH	0x31
 #define MCP_TXB0SIDL	0x32
 #define MCP_TXB1SIDH	0x41
-#define MCP_TXB0SIDL	0x42
+#define MCP_TXB1SIDL	0x42
 #define MCP_TXB2SIDH	0x51
-#define MCP_TXB0SIDL	0x52
+#define MCP_TXB2SIDL	0x52
 
 #define MCP_TXB0DLC		0x35
 #define MCP_TXB1DLC		0x45

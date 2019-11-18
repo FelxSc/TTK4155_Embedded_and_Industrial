@@ -1,15 +1,17 @@
-#include "OLED.h"
+//#include "OLED.h"
 #include "ADC.h"
 #include "JOYSTICK.h"
 #include "Menu.h"
 #include "Interrupt.h"
 #include "game.h"
+#include "OLED.h"
 
 #include <avr/io.h>
 #include <avr/common.h>
 #include <stdbool.h>
 #include <string.h>
 #include <avr/pgmspace.h>
+#include <stdlib.h>
 //#include "FONTS.h"
 
 joystick_data_t joystick_data;
@@ -48,7 +50,7 @@ void menuInit( void )
 	menu_t* game = createMenu("Game", mainMenu, GAME);
 	menu_t* options = createMenu("Options", mainMenu, OPTIONS);
 	menu_t* graphics = createMenu("Graphics??", mainMenu, GRAPHICS);
-	menu_t* music = createMenu("Music??", mainMenu, MUSIC);
+	menu_t* music = createMenu("Music", mainMenu, MUSIC);
 	
 	// Create list of menu options in Game
 	menu_t* playgame = createMenu("Play Game", game, PLAYGAME);
@@ -61,6 +63,9 @@ void menuInit( void )
 	menu_t* PIDtuner = createMenu("PID Tuner", options, PIDTUNER);
 	menu_t* motorSpeed = createMenu("Motor Speed", options, MOTORSPEED);
 	menu_t* credits = createMenu("Credits", options, CREDITS);
+	
+	// Create list of menu options in Music
+	menu_t* zelda = createMenu("Zelda", music, ZELDA);
 	
 		
 	// Link Main Menu - firstChild then rightSibling
@@ -83,9 +88,6 @@ void menuInit( void )
 		
 	currentMenu = mainMenu;
 	drawMenu(currentMenu);
-	
-	
-	
 }
 
 int menuLength(menu_t* menu)
@@ -112,7 +114,7 @@ void drawMenu(menu_t* menu)	// pointer to the selected function
 	int line = 0;
 	OLEDClearAll();
 	OLEDHome();
-	OLEDPrintf(menu->title);
+	fprintf(OLED_p, menu->title);
 	
 	menu = menu->firstChild;
 	int menuWidth = strlen(menu->title)*8;
@@ -125,18 +127,17 @@ void drawMenu(menu_t* menu)	// pointer to the selected function
 			{
 				OLEDGotoPosition(currentLine,2);
 				OLEDprintArrowRight();
-				OLEDinvPrintf(menu->title);
+				fprintf(OLED_invp, menu->title);
 				OLEDprintArrowLeft();
 			}
 		else
 			{
 				OLEDGotoPosition(line,10);
-				OLEDPrintf(menu->title);
+				fprintf(OLED_p, menu->title);
 			}
 		menu = menu->rightSibling;
 	}
-	
-	
+
 }
 
 void gotoMenuFunction(menu_t* menu)
@@ -144,15 +145,19 @@ void gotoMenuFunction(menu_t* menu)
 	//printf("%s - %d",currentMenu->title, currentMenu->ID);
 	switch ((int)currentMenu->ID)
 	{
-		case MAIN_MENU: printf("Main Menu function"); break;
-		case PLAYGAME: printf("play game"); game(); break;
-		case BRIGHTNESS: printf("Brightness"); OLEDContrast(); break;  
-		default: printf("Unknown Menu"); break;
+		case MAIN_MENU: break;
+		case PLAYGAME: game(); break;
+		case BRIGHTNESS:
+			OLEDContrast(); 
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);
+			break;  
+		default: break;
 	}
 }
 
 
-selectedMenu_t selectMenu()
+void selectMenu()
 {
 	int lengthOfMenu = menuLength(currentMenu);
 	joystickDriver();
@@ -193,10 +198,9 @@ selectedMenu_t selectMenu()
 
 
 	}
-		printf("currentMenu->firstChild: %d", currentMenu->firstChild);
 		
 		if(joystickButtonInterrupt == 1 && (currentMenu->firstChild == NULL))
-			{	printf("hei"); joystickButtonInterrupt = 0; gotoMenuFunction(&currentMenu);	}
+		{	joystickButtonInterrupt = 0; gotoMenuFunction(&currentMenu);	}
 		
 		return currentLine;
 		

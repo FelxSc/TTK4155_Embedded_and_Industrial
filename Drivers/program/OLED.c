@@ -4,7 +4,8 @@
  * Created: 18.09.2019 17:08:55
  *  Author: oddiha
  */ 
-
+#ifndef F_CPU
+#define F_CPU 4915200UL // 4.9152 Mhz
 
 #define FOSC 4915200// Clock Speed
 #define BAUD 9600
@@ -26,30 +27,54 @@
 
 #include "FONTS.h"
 #include "OLED.h"
+#include "OLEDStrings.h"
 #include "JOYSTICK.h"
 #include "bitMacro.h"
 #include "Interrupt.h"
+#include "SRAM.h"
+#include "Menu.h"
 
 
-static FILE mystdout = FDEV_SETUP_STREAM(OLEDPrint, NULL, _FDEV_SETUP_WRITE);				
-static FILE myinvstdout = FDEV_SETUP_STREAM(OLEDinvertedPrint, NULL, _FDEV_SETUP_WRITE);
+volatile char* extOledCmd = OLED_COMMAND_ADDRESS;
+volatile char* extOledData = OLED_DATA_ADDRESS;
+volatile OLED_t OLEDpos = {0, 0, 64, 62};
+volatile uint8_t FONTSIZE = 8;
 
-volatile uint8_t* extOledCmd = (uint8_t*) OLED_COMMAND_ADDRESS;
-volatile uint8_t* extOledData = (uint8_t*) OLED_DATA_ADDRESS;
 
-extern OLED_t OLEDpos = {0,0, 64, 62};
+//char* OLEDString[16];
+//#define OLEDFrame ((uint8_t(*)[128]) (SRAM_FIRST_ADDRESS))
+
 
 void write_c(uint8_t command)
 {
-	*extOledCmd = command;
+	extOledCmd[0] = command;
 }
 
 void write_d(uint8_t data)
 {
-	*extOledData = data;
+	extOledData[0] = data;
 }
 
-void OLEDGotoLine(uint8_t line)
+/*void write_s(uint8_t data)
+{
+	OLEDframe[OLEDpos.line][OLEDpos.column] = data;
+	OLEDpos.column++;
+	if (OLEDpos.column > 128)
+	{
+		OLEDpos.column = 0;
+	}
+}*/
+
+
+/*char* get_OLEDString(uint8_t OLEDStringID)
+{
+	strcpy_P(OLEDString, (PGM_P)pgm_read_byte(&(OLEDStringTable[OLEDStringID])));
+	return OLEDString;
+}*/
+
+
+
+void OLEDGotoLine(unsigned char line)
 {
 	if (line < MAX_PAGES)
 	{
@@ -62,7 +87,7 @@ void OLEDGotoLine(uint8_t line)
 	
 }
 
-void OLEDGotoColumn(uint8_t column)
+void OLEDGotoColumn(unsigned char column)
 {
 	if (column < MAX_COLUMNS)
 	{
@@ -76,9 +101,8 @@ void OLEDGotoColumn(uint8_t column)
 	}
 }
 
-//void OLEDUpdate
 
-void OLEDGotoPosition(uint8_t line, uint8_t column)
+void OLEDGotoPosition(unsigned char line, unsigned char column)
 {
 	OLEDGotoLine(line);
 	OLEDGotoColumn(column);
@@ -91,7 +115,7 @@ void OLEDHome(void)
 	OLEDGotoColumn(0x00);
 }
 
-void OLEDClearLine(uint8_t line)
+void OLEDClearLine(unsigned char line)
 {
 	OLEDGotoLine(line);
 	for (int i=0; i<MAX_COLUMNS; i++)
@@ -108,57 +132,32 @@ void OLEDClearAll()
 	}
 }
 
-void OLEDPrintf(char* data, ...)
+void OLEDprintf(char* data, ...)// not changed from uint8_t
 {
 	va_list args;
 	va_start(args, data);
-	vfprintf(&mystdout, data, args);
+	vfprintf(&mystdout, &data, args);
 	va_end(args);
-	
-	// take the length of the string and loop through the columns to get the current column
-/*	for (int i=0; i<length*FONTSIZE;i++)
-	{
-		OLEDpos.column++;
-		if (OLEDpos.column == 128)
-		{
-			OLEDpos.column = 0;
-		}
-	}*/
 }
 
-void OLEDinvPrintf(char* data, ...)
+void OLEDinvPrintf(char* data, ...)// not changed from uint8_t
 {
 	va_list args;
 	va_start(args, data);
-	vfprintf(&myinvstdout, data, args);
+	vfprintf(&myinvstdout, &data, args);
 	va_end(args);
-	
-/*	// take the length of the string and loop through the columns to get the current column
-	for (int i=0; i<length*FONTSIZE;i++)
-	{
-		OLEDpos.column++;
-		if (OLEDpos.column == 128)
-		{
-			OLEDpos.column = 0;
-		}
-	}*/
 }
 
 
-int OLEDinvertedPrint(unsigned char data)
+int OLEDinvertedPrint(unsigned char data)	// not changed from uint8_t
 {
-	//uint8_t printChar = c-32;
-	
 	for (int i=0; i < FONTSIZE; i++) {
-		//Write_d(~pgm_read_word(&font8[printChar][i]));
 		switch (FONTSIZE)
 		{
 			case 4: write_d(~pgm_read_byte(&(font4[data - ' '][i]))); break;
 			case 5: write_d(~pgm_read_byte(&(font5[data - ' '][i]))); break;
 			case 8: write_d(~pgm_read_byte(&(font8[data - ' '][i]))); break;
 		}
-		//position.col += fontSize;
-		//oled_is_out_of_bounds();
 	}
 	
 	return 0;
@@ -219,7 +218,7 @@ void OLEDInit(void)
 
 
 
-void OLEDPrint(uint8_t data)
+int OLEDPrint(unsigned char data)// not changed from uint8_t
 {
 	for (int i=0; i<FONTSIZE; i++)
 	{
@@ -230,23 +229,25 @@ void OLEDPrint(uint8_t data)
 		case 8: write_d(pgm_read_byte(&(font8[data - ' '][i]))); break;
 		}
 	}
+	return 0;
 }
+
 
 
 void OLEDContrast(void)
 {
-	
-	OLEDGotoPosition(3,0);
-	OLEDPrintf("Use joystick!");
+		
 	OLEDGotoPosition(4,0);
-	OLEDPrintf("Keep brightness?");
+	fprintf(OLED_p, "Keep brightness?");
+	
 	OLEDGotoPosition(5,0);
-	//OLEDPrintf("Press");
+	fprintf(OLED_p, "LB Return");
+	
 	OLEDcreateBar();
 	
 	do{
 		joystickDriver();
-		//printf("Column : %d", OLEDpos.column);
+		
 		if(joystick_data.joystickPosition == RIGHT && OLEDpos.column < 115)
 		{
 			if(OLEDpos.column < 11)
@@ -254,7 +255,6 @@ void OLEDContrast(void)
 			
 			OLEDpos.brightness++;
 			
-			//printf("Joystick Up = %d", joystick_data.joystickPosition);
 			write_c(0x81);
 			write_c(OLEDpos.brightness);
 			write_d(0b11111111);
@@ -264,7 +264,6 @@ void OLEDContrast(void)
 		}
 		else if(joystick_data.joystickPosition == LEFT && OLEDpos.column > 13 )
 		{
-			//printf("Joystick Down = %d", joystick_data.joystickPosition);
 			if(OLEDpos.column > 114)
 				{ OLEDpos.column = 113; OLEDGotoColumn(OLEDpos.column); }
 				
@@ -277,11 +276,17 @@ void OLEDContrast(void)
 			OLEDpos.column--;
 			OLEDGotoColumn(OLEDpos.column);
 		}
-		_delay_ms(100);
-	}while(!test_bit(PINB,PINB3));
+		_delay_ms(50);
+	}while(joystickButtonInterrupt == 0);
 	
+	joystickButtonInterrupt = 0;
 	OLEDpos.LastBrightnessPos = OLEDpos.column;
+	
+}
 
+void setFontSize(uint8_t fontsize)
+{
+	FONTSIZE = fontsize;
 }
 
 
@@ -310,50 +315,98 @@ void OLEDcreateBar(void)
 void OLEDScoreCounter(void)
 {
 	OLEDClearAll();
+	
 	OLEDGotoPosition(2, 44); // Go to approximately the middle of the screen
-	OLEDPrintf("SCORE");
+	fprintf(OLED_p, "SCORE");
+	
 	OLEDGotoPosition(4,60);
-	OLEDPrintf("%d", gameTimer); // Print the Score
+	fprintf(OLED_p, "%d", gameTimer);
 }
 
-void OLEDGameOver(void)
+void OLEDGameOver(uint16_t highscore)
 {
+	OLEDClearAll();
 	
+	OLEDGotoPosition(0, 32); // Print 'Game Over' in the middle of the screen
+	fprintf(OLED_p, "GAMEOVER");
+	
+	OLEDGotoPosition(2, 24);
+	fprintf(OLED_p, "YOUR SCORE");
+	
+	OLEDGotoPosition(3,56); // Calculate exact position??? Or just approximately?
+	fprintf(OLED_p, "%d", gameTimer);
+	
+	OLEDGotoPosition(5,28);
+	fprintf(OLED_p, "HIGHSCORE");
+	
+	OLEDGotoPosition(6,56);
+	fprintf(OLED_p, "%d", highscore);
 }
 
-/*
-int main(void)
+void OLEDNewHighscore(void)
 {
-	char data = 'a';
-	
-	USART_Init ( MYUBRR );
-	fdevopen(&USART_Transmit, &USART_Receive);
-	ExernalMemoryInit();
-	
-	OLEDInit();
+	uint8_t highscoreTimer = 0;
+	uint8_t toggleBrigthness = 0;
 	
 	OLEDClearAll();
-	OLEDGotoLine(3);
-	OLEDGotoColumn(100);
-	//OLEDPrintf("AWESOME SAUCE");
-	OLEDinvPrintf("Poor GUY!! :-(");
-    while(1)
-    {
-        printf("Hello!");
+	
+	OLEDGotoPosition(2, 52);
+	fprintf(OLED_p, "NEW");
+
+	OLEDGotoPosition(3, 28);
+	fprintf(OLED_p, "HIGHSCORE");
+	
+	OLEDGotoPosition(5, 56);
+	fprintf(OLED_p, "%d", gameTimer);
+	
+	// CHANGE THIS, TOO MUCH MEMORY
+	while (highscoreTimer < 100)
+	{
+		highscoreTimer++;
+		if (toggleBrigthness == 0)
+		{
+			write_c(0x81);
+			write_c(0x08);
+			toggleBrigthness = 1;
+		}
+		else
+		{
+			write_c(0x81);
+			write_c(0x80);
+			toggleBrigthness = 0;
+		}
 		
-		
-		
-		write_c(0x81);
-		write_c(0x50);			// contrast value
-		_delay_ms(500);
-		write_c(0x81);
-		write_c(0x00);			// contrast value
-		//OledPrint(data);
-		//data++;
-		
-		
-		//write_c(0xa5);
-		_delay_ms(500);
-		
-    }
-}*/
+		_delay_ms(300);
+	}
+	
+	write_c(0x81);
+	write_c(OLEDpos.LastBrightnessPos);
+	
+}
+
+void OLEDAfterGame(void)
+{
+	OLEDGotoPosition(7, 0);
+	fprintf(OLED_p, "<-Return");
+	
+	OLEDGotoPosition(7, 72);
+	fprintf(OLED_p, "Again->");
+}
+
+void OLEDStartGame(void)
+{
+	OLEDClearAll();
+	
+	for (int i = 0; i<3; i++)
+	{
+		OLEDGotoPosition(3, 60);
+		fprintf(OLED_p, "%d", (3-i));
+		_delay_ms(2000);
+	}
+	
+	OLEDGotoPosition(3, 52);
+	fprintf(OLED_p, "GO!");
+	
+	_delay_ms(2000);
+}
+#endif

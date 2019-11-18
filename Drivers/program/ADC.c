@@ -16,8 +16,6 @@
 
 #include "ADC.h"
 #include "JOYSTICK.h"
-
-//joystick_data_t joystickCalibration;
 	
 volatile uint8_t* extADC = (uint8_t*) ADC_ADDRESS;
 volatile uint8_t ADCdata;
@@ -30,47 +28,17 @@ void adcInit( void )
 	// PortE pin0 as input
 	DDRE &= ~(1 << PE0);
 	
-	// PortB pin0 as input
-	DDRB &= ~(1 << PB0);	// USB_RIGHT_TOUCHBUTTON
-	
 	// PortD pin 2 and 3 as input
 	DDRD &= ~(1 << PD2);	// MCP2515 Interrupt
 	DDRD &= ~(1 << PD3);	// JOYSTICK PUSHBUTTON - Make interrupt??
 	
 	// Set pull-up resistor PE0 & PB0
 	PORTE |= (1 << PE0);	// LatchEnable Active Low 
-	PORTB |= (1 << PB0);	// USB_RIGHT_TOUCHBUTTON -- Does it work?? The PUSH signal is HIGH - Maybe we need pull-down then??
 	
 	// pull-down
 	PORTD &= ~(1 << PD2);	// MCP2515 interrupt
 	PORTD &= ~(1 << PD3);	//	Joystick PUSHBUTTON
-	
-	//disable global interrupt
-	//cli();
-	
-	// INT2 Interrupt on falling edge
-	//EMCUCR &= ~(1 << ISC2);
-	
-	// INT0 Interrupt on rising edge
-	//EMCUCR |= (1 << ISC01);
-	//EMCUCR |= (1 << ISC00);	
-	
-	// INT1 Interrupt on rising edge
-	//EMCUCR |= (1 << ISC11);
-	//EMCUCR |= (1 << ISC10);
-	
-	// Enable interrupt on PE0
-	//GICR |= (1 << INT2);
-	
-	//Enable interrupt on PD2
-	//GICR |= (1<<INT0);
-	
-	//Enable interrupt on PD3
-	//GICR |= (1<<INT1);
-	
-	//enable global interrupt
-	//sei();
-	
+		
 }
 
 
@@ -107,7 +75,7 @@ uint8_t getADCdata(channel_t channel)
 
 
 
-/*
+/*			I don't know why we have slider driver here????
 void sliderDriver()
 {
 	uint8_t leftSliderData, rightSliderData;
@@ -190,7 +158,7 @@ void joystickDriver()
 	printf("Joystick X = %d \n\r", x_axis);
 	printf("Joystick Y = %d \n\r", y_axis);
 }
-*/
+
 
 
 /*

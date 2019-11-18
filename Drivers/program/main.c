@@ -1,6 +1,6 @@
-//#ifndef F_CPU
+#ifndef F_CPU
 #define F_CPU 4915200UL // 4.9152 Mhz
-//#endif
+
 
 #include <avr/io.h>
 #include <string.h>
@@ -16,9 +16,6 @@
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 
-//extern void USART_Init(unsigned int ubrr);
-
-
 #include "OLED.h"
 #include "ADC.h"
 #include "Menu.h"
@@ -32,30 +29,31 @@
 #include "game.h"
 #include "Interrupt.h"
 #include "EEPROM.h"
+#include "Music.h"
+#include "solenoid.h"
 
 
-
-
-uint8_t timer1Flag;
+volatile uint8_t timer1Flag;
 
 void ExernalMemoryInit( void )
 {
 	MCUCR |= (1<<SRE); // Enable External memory
 	SFIOR |= (1<<XMM2); // mask PORTC 4 - 7 JTAG
-	
 }
 
-
+// Receive CAN message Interrupt
 ISR(INT0_vect)
 {
 	CAN_interrupt = 1;
 }
 
+// Joystick pushbutton ISR
 ISR(INT1_vect)
 {
 	joystickButtonInterrupt = 1;
 }
 
+//SendCANmessage ISR
 ISR(TIMER1_OVF_vect)
 {
 	timer1Flag++;
@@ -63,24 +61,29 @@ ISR(TIMER1_OVF_vect)
 	{ timer1Flag = 0;	Timer1_interrupt = 1; }
 }
 
+// Game score ISR
 ISR(TIMER3_COMPA_vect)
 {
 	gameTimer++;
 }
 
-
-void main()
+// Buzzer ISR
+ISR(TIMER0_COMP_vect)
 {
-	
+ 
+}
+
+
+int main()
+{
 // ----- Initialization ----- //
 	USART_Init( MYUBRR );
 	fdevopen(&USART_Transmit, &USART_Receive);
 	
-	cli();
-	InterruptInit();
-	Timer1Init();
-	Timer3Init();
-	sei();
+	receiveCanInterruptInit();
+	SendCANTimer1Init();
+	gameTimer3Init();
+
 	ExernalMemoryInit();
 	adcInit();
 	OLEDInit();
@@ -88,37 +91,35 @@ void main()
 	SPI_MasterInit();
 	solenoidButtonInit();
 	gameButtonInit();
-	joystickButtonInit();
+	buzzerInit();
 
+	buzzerTimer0Init();
+	joystickButtonInit();
 	
 	
 	printf("Initialization of MCP2515...\n\r");
 	MCP2515init(MODE_NORMAL);	
 	
 
+	disableBuzzer();
+	disableSendCANTimer1();
+	disableGameTimer3();
 
-	
-	
-	uint8_t status, dataReceive, dataSend = 1;
-	uint8_t current_Line;
-	
-	// game state initialized as IDLE
+	// game state initialized as START
 	state = START;
-	
-	char dataWrite = 'a';
-	char dataRead;
-	uint16_t adr = 0x0;
-	
-	uint16_t highscore, address;
-	uint8_t highscoreLow, highscoreHigh, scoreLow, scoreHigh;
+
+	//EEPROM_reset(20);
 	
 	// Main Loop
 	while(1)
 	{
-		current_Line = selectMenu();
+		selectMenu();
+
 		_delay_ms(300);
-		
 		_delay_ms(20);
 		
 	}
+	return 0;
 }
+
+#endif
