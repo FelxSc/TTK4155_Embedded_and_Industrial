@@ -1,7 +1,6 @@
 
 const char repeatSection[11] = {4,4,1,3,1,1,1,3,1,1,4}
-const uint16_t nrSection = 11
-const uint16_t nrSectionElement = 5
+
 const uint16_t PROGMEM GameOfThronesTime[][] = {
 	{500, 500, 250, 250, 1},		// reapeat 4
 	{500, 500, 250, 250, 1},		// reapeat 4
@@ -31,4 +30,16 @@ const uint16_t PROGMEM GameOfThronesNote[][] = {
 	{NOTE_C4, NOTE_DS4, NOTE_F4, NOTE_D4, NOTE_D4},
 	{NOTE_G3, NOTE_AS3, NOTE_C4, NOTE_D4, NOTE_D4}
 
+}
+
+const char repeatSection[1] = {1}
+
+void ShootSound(void)
+{
+	enableBuzzer();
+	for(int i = 5000; i > 4900; i -=10)
+	{
+		setBuzzerFrequency(i)
+	}
+	disableBuzzer();
 }
