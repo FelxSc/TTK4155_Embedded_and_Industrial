@@ -109,14 +109,21 @@ int main()
 	state = START;
 
 	//EEPROM_reset(20);
-	
+
+	setBuzzerPrescaler(8);
 	// Main Loop
 	while(1)
 	{
-		selectMenu();
+		//selectMenu();
 
-		_delay_ms(300);
+		_delay_ms(150);
 		_delay_ms(20);
+		for (int i=0; i<256; i++)
+		{
+			printf("i; %d",i);
+			write_c(0x81);
+			write_c(i);
+		}
 		
 	}
 	return 0;

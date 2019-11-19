@@ -5,6 +5,8 @@
 #include "Interrupt.h"
 #include "game.h"
 #include "OLED.h"
+#include "Music.h"
+#include "HIGHSCORE.h"
 
 #include <avr/io.h>
 #include <avr/common.h>
@@ -61,11 +63,17 @@ void menuInit( void )
 	menu_t* brightness = createMenu("Brightness", options, BRIGHTNESS);
 	menu_t* changeFont = createMenu("Change Font", options, CHANGEFONT);
 	menu_t* PIDtuner = createMenu("PID Tuner", options, PIDTUNER);
-	menu_t* motorSpeed = createMenu("Motor Speed", options, MOTORSPEED);
+	menu_t* resethighscore = createMenu("Reset Highsc.", options, RESETHIGHSCORE);
 	menu_t* credits = createMenu("Credits", options, CREDITS);
 	
 	// Create list of menu options in Music
 	menu_t* zelda = createMenu("Zelda", music, ZELDA);
+	menu_t* got = createMenu("GoT", music, GOT);
+	
+	// Create list of menu options in ChangeFont
+	menu_t* small = createMenu("Small", changeFont, FONTSMALL);
+	menu_t* medium = createMenu("Medium", changeFont, FONTMEDIUM);
+	menu_t* big = createMenu("Big", changeFont, FONTBIG);	
 	
 		
 	// Link Main Menu - firstChild then rightSibling
@@ -83,8 +91,18 @@ void menuInit( void )
 	setFirstChild(options, brightness);
 	setRightSibling(brightness, changeFont);
 	setRightSibling(changeFont, PIDtuner);
-	setRightSibling(PIDtuner, motorSpeed);
-	setRightSibling(motorSpeed, credits);
+	setRightSibling(PIDtuner, resethighscore);
+	setRightSibling(resethighscore, credits);
+	
+	// Link Music - firstChild then rightSibling
+	setFirstChild(music, zelda);
+	setRightSibling(zelda, got);
+	
+	// Link Music - firstChild then rightSibling
+	setFirstChild(changeFont, small);
+	setRightSibling(small, medium);
+	setRightSibling(medium, big);
+	
 		
 	currentMenu = mainMenu;
 	drawMenu(currentMenu);
@@ -146,12 +164,72 @@ void gotoMenuFunction(menu_t* menu)
 	switch ((int)currentMenu->ID)
 	{
 		case MAIN_MENU: break;
+		// ------GAME------
+		// Playgame
 		case PLAYGAME: game(); break;
+		// Highscore
+		case HIGHSCORE:
+			OLEDShowHighscore();
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);
+			break;
+		// ------OPTIONS------
+		// Brightness
 		case BRIGHTNESS:
 			OLEDContrast(); 
 			currentMenu = currentMenu->parent;
 			drawMenu(currentMenu);
 			break;  
+		// Change Font
+		case FONTSMALL:
+			setFontSize(4);
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);
+			break;
+		case FONTMEDIUM:
+			setFontSize(5);
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);
+			break;
+		case FONTBIG:
+			setFontSize(8);
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);
+			break;
+		// Credits
+		case CREDITS:
+			OLEDGotoPosition(1,0);
+			fprintf(OLED_p, "Created by");
+			OLEDGotoPosition(2,0);
+			fprintf(OLED_p, "Odd Inge Halsos");
+			OLEDGotoPosition(3,0);
+			fprintf(OLED_p, "Felix Schoepe");
+			break;
+		// PIDTUNER
+		case PIDTUNER:
+			break;
+		case RESETHIGHSCORE:
+			resetHighscore();
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);
+			break;
+		// ------MUSIC------
+		case ZELDA:
+			OLEDGotoPosition(3,24);
+			fprintf(OLED_p, "Listen :-)");
+			PlaySong(ZELDA_ID);
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);
+			break;
+		case GOT:
+			OLEDGotoPosition(3,24);
+			fprintf(OLED_p, "Listen :-)");
+			PlaySong(GOT_ID);
+			currentMenu = currentMenu->parent;
+			drawMenu(currentMenu);	
+			break;
+
+
 		default: break;
 	}
 }

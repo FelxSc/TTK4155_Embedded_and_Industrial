@@ -99,7 +99,8 @@
 #define NOTE_DS8 4978
 
 // defined IDs for different songs
-#define Zelda_ID 0
+#define ZELDA_ID 0
+#define GOT_ID 1
 
 #include <avr/pgmspace.h>
 
@@ -108,10 +109,10 @@ void enableBuzzer( void );
 void disableBuzzer( void );
 void SweepBuzzer( void );
 void setBuzzerFrequency(uint16_t frequency );
-void ZeldaSong( void );   //here is where all the notes for the song are played.
 void GameOfThrones( void );
 void setBuzzerPrescaler(uint16_t prescaler );
 void PlaySong(uint8_t songID);
+void ShootSound(void);
 
 
 

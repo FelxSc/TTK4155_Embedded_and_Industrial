@@ -4,6 +4,7 @@
  * Created: 13.11.2019 11:49:08
  *  Author: felixas
  */
+#ifndef F_CPU
 #define F_CPU 4915200UL // 4.9152 Mhz
 
 
@@ -28,6 +29,8 @@
 #include "bitMacro.h"
 #include "EEPROM.h"
 #include "OLED.h"
+#include "HIGHSCORE.h"
+#include "Music.h"
 
 uint8_t leftButtonFlag = 0;
 
@@ -68,7 +71,7 @@ void game(void){
 				{				
 					// Test Left Touch button to activate solenoid
 					if(test_bit(PINB,PINB3))
-					{	slider_data.leftbutton = 1; /*printf("button on\n\r");*/ }//_delay_ms(50);	}
+					{	slider_data.leftbutton = 1; ShootSound();/*printf("button on\n\r");*/ }//_delay_ms(50);	}
 					else
 					{	slider_data.leftbutton = 0;  /*printf("Button off\n\r");*/	}
 			
@@ -94,27 +97,33 @@ void game(void){
 				//printf("GAMEOVER");
 				//printf("GameTimer: %d", gameTimer);
 			
-				scoreLow = gameTimer;
+				/*scoreLow = gameTimer;
 				scoreHigh = gameTimer >> 8;
 			
 			
 				//printf("ScoreLow = %d\n\r", scoreLow);
 				//printf("ScoreHigh = %d\n\r", scoreHigh);
 			
-				// save the highscore to SRAM.
+				// save the highscore to EEPROM.
 				highscoreLow = EEPROM_read(0);
 				highscoreHigh = EEPROM_read(1);
-				highscore = ((uint16_t)highscoreHigh << 8) | highscoreLow;
+				highscore = ((uint16_t)highscoreHigh << 8) | highscoreLow;*/
 
-				OLEDGameOver(highscore);
+				// Read the highest highscore and print the results of the last game
+				OLEDGameOver(ReadHighscore(0));
 
-				if( gameTimer > highscore ){
+				/*if( gameTimer > highscore ){
 					EEPROM_write(0, scoreLow);
 					EEPROM_write(1, scoreHigh);
 					OLEDNewHighscore();
 				}
-				printf("Highscore %d", highscore);
-
+				printf("Highscore %d", highscore);*/
+				
+				if (saveHighscore(gameTimer) == 1)
+				{
+					OLEDNewHighscore();
+				}
+				
 				OLEDAfterGame();
 				
 				while(1)
@@ -140,3 +149,4 @@ void game(void){
 		}
 	}while(state != START);
 }
+#endif

@@ -26,7 +26,9 @@
 #include "Interrupt.h"
 #include "main.h"
 
-const uint16_t PROGMEM ZeldaNote[43]  = {
+const uint8_t PROGMEM repeatZeldaRow[1] = {1};
+
+const uint16_t PROGMEM ZeldaNote[1][43]  = {
 	NOTE_D5, NOTE_D5, NOTE_D5, NOTE_D5, NOTE_F5,
 	NOTE_D6, NOTE_E6, NOTE_F6, NOTE_E6, NOTE_F6,
 	NOTE_E6, NOTE_C6, NOTE_A5, NOTE_A5, NOTE_D5,
@@ -40,7 +42,7 @@ const uint16_t PROGMEM ZeldaNote[43]  = {
 };
 
 
-const uint16_t PROGMEM ZeldaTime[43] = {
+const uint16_t PROGMEM ZeldaTime[1][43] = {
 	180, 180, 450, 180, 180,
 	450, 400, 200, 180, 180,
 	180, 180, 400, 300, 300,
@@ -51,6 +53,40 @@ const uint16_t PROGMEM ZeldaTime[43] = {
 	200, 180, 180, 180, 180,
 	400, 300, 300, 200, 200,
 	400, 300, 2300
+};
+
+
+const char repeatGameOfThroneRow[11] = {4,4,1,3,1,1,1,3,1,1,4};
+
+const uint16_t PROGMEM GameOfThronesTime[11][5] = {
+	{500, 500, 250, 250, 1},		// reapeat 4
+	{500, 500, 250, 250, 1},		// reapeat 4
+	{500, 500, 250, 250, 500},		// reapeat 1
+	{500, 250, 250, 500, 1},		// reapeat 3
+	{500, 250, 250, 1000, 1000},	// reapeat 1
+	{1000, 250, 250, 1000, 1000},	// reapeat 1
+	{250, 250, 500, 500, 1},		// reapeat 1
+	{250, 250, 500, 1, 	1},			// reapeat 3
+	{1000, 1000, 250, 250, 1000},	// reapeat 1
+	{1000, 250, 250, 500, 1},		// reapeat 1
+	{500, 250, 250, 500, 1},		// reapeat 3
+};
+
+const uint16_t PROGMEM GameOfThronesNote[11][5] = {
+	{NOTE_G4, NOTE_C4, NOTE_DS4, NOTE_F4, NOTE_F4},
+	{NOTE_G4, NOTE_C4, NOTE_E4, NOTE_F4, NOTE_F4},
+	{NOTE_G4, NOTE_C4, NOTE_DS4, NOTE_F4, NOTE_D4},
+	{NOTE_G3, NOTE_AS3,	NOTE_C4, NOTE_D4, NOTE_D4},
+	
+	{NOTE_G3, NOTE_AS3, NOTE_C4, NOTE_D4, NOTE_F4},
+	{NOTE_AS3, NOTE_DS4, NOTE_D4, NOTE_F4, NOTE_AS3},
+	{NOTE_DS4, NOTE_D4, NOTE_C4, NOTE_C4, NOTE_C4},
+	
+	{NOTE_GS3, NOTE_AS3, NOTE_C4, NOTE_F3, NOTE_F3},
+	{NOTE_G4, NOTE_C4, NOTE_DS4, NOTE_F4, NOTE_G4},
+	{NOTE_C4, NOTE_DS4, NOTE_F4, NOTE_D4, NOTE_D4},
+	{NOTE_G3, NOTE_AS3, NOTE_C4, NOTE_D4, NOTE_D4}
+
 };
 
 void buzzerInit( void )
@@ -92,7 +128,7 @@ void setBuzzerPrescaler(uint16_t prescaler)
 // Timer0 pre-scaled: 256 - Min freq (OCR0 = 255): 75.29 Hz - Max freq (OCR0 = 1): 19200 kHz
 void setBuzzerFrequency(uint16_t frequency)
 {
-			printf("Frequency = %d - ", frequency);
+			printf("Frequency = %d\n\r", frequency);
 			
 	uint8_t compareValue = 38400/frequency;
 	if (compareValue > 254)
@@ -115,40 +151,71 @@ void SweepBuzzer( void )
 
 void PlaySong(uint8_t songID)
 {
-	uint16_t songtimer = 0;
-	uint8_t number = 0;
-	uint16_t limit = 0;
+	uint8_t row = 0;
+	uint8_t column = 0;
+	uint8_t repeat = 0;
+	uint8_t nrOfRow = 0;	//sizeof(pgm_read_word(&(ZeldaNote[0])));
+	uint8_t nrOfColumn = 0;	//sizeof(pgm_read_word(&(ZeldaNote)))/nrOfRow;
+	
+	
+	
 	switch (songID)
 	{
-	/*case GameOfThrones_ID:
-		for ()
-		{
-		}
-		break;*/
-	case Zelda_ID:
-		disableGameTimer3();
-		Timer3_millisecond();
-		enableGameTimer3();
+	case GOT_ID:
+			
+			nrOfRow = 11;
+			nrOfColumn = 5;
+			enableBuzzer();
+			while ((row < nrOfRow) & (joystickButtonInterrupt == 0))
+			{//printf("%d",repeatGameOfThroneRow[row]);
+				while ( (repeat < repeatGameOfThroneRow[row]) & (joystickButtonInterrupt == 0))
+				{
+					while ((column < nrOfColumn) & (joystickButtonInterrupt == 0))
+					{
+						setBuzzerFrequency(pgm_read_word(&(GameOfThronesNote[row][column])));
+						millisecond(pgm_read_word(&(GameOfThronesTime[row][column])));
+						column++;
+						//printf("column: %d\n\r", column);
+					}
+					//printf("repeat: %d\n\r", repeat);
+					column = 0;
+					repeat++;
+				}
+				//printf("Row: %d\n\r",row);
+				repeat = 0;
+				row++;
+			}
+			disableBuzzer();
+			break;
+
+	case ZELDA_ID:
+	
+		nrOfRow = 1;	//sizeof(pgm_read_word(&(ZeldaNote[0])));
+		nrOfColumn = 43;	//sizeof(pgm_read_word(&(ZeldaNote)))/nrOfRow;
+	
 		enableBuzzer();
-		//for (uint8_t i = 0; i < 43; i++)
-		while (number != 43)
+		while ((row < nrOfRow) & (joystickButtonInterrupt == 0))
 		{
-			printf("Index: %d - ", number);
-			
-			setBuzzerFrequency(pgm_read_word(&(ZeldaNote[number])));
-			
-			limit = pgm_read_word(&(ZeldaTime[number]));
-			printf("Time = %d\n\r", limit);
-			
-			
-			millisecond(limit);
-		number++;
+			while (( repeat < pgm_read_word(&(repeatZeldaRow[row]))) & (joystickButtonInterrupt == 0))
+			{
+				while ((column < nrOfColumn) & (joystickButtonInterrupt == 0))
+				{			
+					setBuzzerFrequency(pgm_read_word(&(ZeldaNote[row][column])));
+					millisecond(pgm_read_word(&(ZeldaTime[row][column])));
+					column++;
+				}
+				column = 0;
+				repeat++;
+			}
+			repeat = 0;
+			row++;
 		}
-		number = 0;
-		limit = 0;
 		disableBuzzer();
 		break;
 	}
+	
+	if(joystickButtonInterrupt == 1)
+		joystickButtonInterrupt == 0;
 }
 
 void millisecond(uint16_t number)
@@ -158,269 +225,22 @@ void millisecond(uint16_t number)
 	}
 }
 
-/*
-void GameOfThrones( void )
+
+void ShootSound(void)
 {
-	for(int i=0; i<4; i++)
+	enableBuzzer();
+	for(int i = 3000; i > 1500; i -=10)
 	{
-		setBuzzerFrequency( NOTE_G4);
-		_delay_ms(500);
-		// noTone??
-		setBuzzerFrequency( NOTE_C4);
-		_delay_ms(500);
-		// noTone??
-		setBuzzerFrequency( NOTE_DS4);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_F4);
-		_delay_ms(250);
-		// noTone??
+		setBuzzerFrequency(i);
 	}
-	for(int i=0; i<4; i++)
-	{
-		setBuzzerFrequency( NOTE_G4);
-		_delay_ms(500);
-		// noTone??
-		setBuzzerFrequency( NOTE_C4);
-		_delay_ms(500);
-		// noTone??
-		setBuzzerFrequency( NOTE_E4);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_F4);
-		_delay_ms(250);
-		// noTone??
-	}
-	setBuzzerFrequency( NOTE_G4);
-	_delay_ms(500);
-	// noTone??
-	setBuzzerFrequency( NOTE_C4);
-	_delay_ms(500);
-	setBuzzerFrequency( NOTE_DS4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_F4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_D4);
-	_delay_ms(500);
-	// noTone??
-	for(int i=0; i<3; i++)
-	{
-		setBuzzerFrequency( NOTE_G3);
-		_delay_ms(500);
-		// noTone??
-		setBuzzerFrequency( NOTE_AS3);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_C4);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_D4);
-		_delay_ms(500);
-		// noTone??
-	}//
-	setBuzzerFrequency( NOTE_G3);
-	_delay_ms(500);
-	// noTone??
-	setBuzzerFrequency( NOTE_AS3);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_C4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_D4);
+	setBuzzerFrequency(152);
 	_delay_ms(1000);
-	// noTone??
-	
-	setBuzzerFrequency( NOTE_F4);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_AS3);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_DS4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_D4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_F4);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_AS3);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_DS4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_D4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_C4);
-	_delay_ms(500);
-	// noTone??
-	for(int i=0; i<3; i++)
-	{
-		setBuzzerFrequency( NOTE_GS3);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_AS3);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_C4);
-		_delay_ms(500);
-		// noTone??
-		setBuzzerFrequency( NOTE_F3);
-		_delay_ms(500);
-		// noTone??
-	}
-	setBuzzerFrequency( NOTE_G4);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_C4);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_DS4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_F4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_G4);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_C4);
-	_delay_ms(1000);
-	// noTone??
-	setBuzzerFrequency( NOTE_DS4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_F4);
-	_delay_ms(250);
-	// noTone??
-	setBuzzerFrequency( NOTE_D4);
-	_delay_ms(500);
-	// noTone??
-	for(int i=0; i<4; i++)
-	{
-		setBuzzerFrequency( NOTE_G3);
-		_delay_ms(500);
-		// noTone??
-		setBuzzerFrequency( NOTE_AS3);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_C4);
-		_delay_ms(250);
-		// noTone??
-		setBuzzerFrequency( NOTE_D4);
-		_delay_ms(500);
-		// noTone??
-	}
 	disableBuzzer();
 }
-*/
-void ZeldaSong( void )  //here is where all the notes for the song are played.
+
+void startSound(void)
 {
-	setBuzzerFrequency( NOTE_D5 );  //   setBuzzerFrequency(( -PIN OF SPEAKER-, -THE NOTE WANTING TO BE PLAYED-, -DURATION OF THE NOTE IN MILISECONDS- )
-	_delay_ms(180);
 	
-	setBuzzerFrequency( NOTE_F5 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_D6 );
-	_delay_ms(450);
-	
-	setBuzzerFrequency( NOTE_D5 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_F5 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_D6 );
-	_delay_ms(450);
-	
-	setBuzzerFrequency( NOTE_E6 );
-	_delay_ms(400);
-	setBuzzerFrequency( NOTE_F6 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_E6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_F6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_E6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_C6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(400);
-	
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(300);
-	setBuzzerFrequency( NOTE_D5 );
-	_delay_ms(300);
-	setBuzzerFrequency( NOTE_F5 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_G5 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(600);
-	
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(300);
-	setBuzzerFrequency( NOTE_D5 );
-	_delay_ms(300);
-	setBuzzerFrequency( NOTE_F5 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_G5 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_E5 );
-	_delay_ms(600);
-	
-	
-	
-	setBuzzerFrequency( NOTE_D5 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_F5 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_D6 );
-	_delay_ms(450);
-	
-	setBuzzerFrequency( NOTE_D5 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_F5 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_D6 );
-	_delay_ms(450);
-	
-	setBuzzerFrequency( NOTE_E6 );
-	_delay_ms(400);
-	setBuzzerFrequency( NOTE_F6 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_E6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_F6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_E6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_C6 );
-	_delay_ms(180);
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(400);
-	
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(300);
-	setBuzzerFrequency( NOTE_D5 );
-	_delay_ms(300);
-	setBuzzerFrequency( NOTE_F5 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_G5 );
-	_delay_ms(200);
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(400);
-	setBuzzerFrequency( NOTE_A5 );
-	_delay_ms(300);
-	setBuzzerFrequency( NOTE_D5 );
-	_delay_ms(2300);
-	
-	disableBuzzer();	
 }
 
 #endif

@@ -33,6 +33,7 @@
 #include "Interrupt.h"
 #include "SRAM.h"
 #include "Menu.h"
+#include "Music.h"
 
 
 volatile char* extOledCmd = OLED_COMMAND_ADDRESS;
@@ -237,11 +238,12 @@ int OLEDPrint(unsigned char data)// not changed from uint8_t
 void OLEDContrast(void)
 {
 		
-	OLEDGotoPosition(4,0);
-	fprintf(OLED_p, "Keep brightness?");
+	OLEDGotoPosition(6,12);
+	fprintf(OLED_p, "0%%");
 	
-	OLEDGotoPosition(5,0);
-	fprintf(OLED_p, "LB Return");
+	OLEDGotoPosition(6,84);
+	fprintf(OLED_p, "100%%");
+
 	
 	OLEDcreateBar();
 	
@@ -272,10 +274,11 @@ void OLEDContrast(void)
 			write_c(0x81);
 			write_c(OLEDpos.brightness);
 			write_d(0b11000011);
-			
+						
 			OLEDpos.column--;
 			OLEDGotoColumn(OLEDpos.column);
 		}
+		
 		_delay_ms(50);
 	}while(joystickButtonInterrupt == 0);
 	
@@ -360,7 +363,7 @@ void OLEDNewHighscore(void)
 	fprintf(OLED_p, "%d", gameTimer);
 	
 	// CHANGE THIS, TOO MUCH MEMORY
-	while (highscoreTimer < 100)
+	while (highscoreTimer < 50)
 	{
 		highscoreTimer++;
 		if (toggleBrigthness == 0)
@@ -396,17 +399,44 @@ void OLEDAfterGame(void)
 void OLEDStartGame(void)
 {
 	OLEDClearAll();
-	
+	setBuzzerFrequency((NOTE_C6));
+		
 	for (int i = 0; i<3; i++)
 	{
+		enableBuzzer();
 		OLEDGotoPosition(3, 60);
 		fprintf(OLED_p, "%d", (3-i));
-		_delay_ms(2000);
-	}
+		_delay_ms(800);
+		disableBuzzer();
+		_delay_ms(200);
 	
+	}
+	setBuzzerFrequency(NOTE_C7);
+	enableBuzzer();
 	OLEDGotoPosition(3, 52);
 	fprintf(OLED_p, "GO!");
-	
-	_delay_ms(2000);
+	_delay_ms(1000);
+	disableBuzzer();
 }
+
+void OLEDShowHighscore(void)
+{
+	
+	uint16_t highscore1, highscore2, highscore3;
+	
+	// Check if new score is new highscore
+	highscore1 = ReadHighscore(0);
+	highscore2 = ReadHighscore(2);
+	highscore3 = ReadHighscore(4);
+	do{
+			OLEDGotoPosition(2,0);
+			fprintf(OLED_p, "1. %d", highscore1);
+			OLEDGotoPosition(3,0);
+			fprintf(OLED_p, "2. %d", highscore2);
+			OLEDGotoPosition(4,0);
+			fprintf(OLED_p, "3. %d", highscore3);
+	}while(joystickButtonInterrupt == 0);
+
+}
+
 #endif

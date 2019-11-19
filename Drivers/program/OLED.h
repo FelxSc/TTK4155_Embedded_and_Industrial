@@ -53,6 +53,8 @@ void OLEDGameOver(uint16_t highscore);
 void OLEDNewHighscore(void);
 void OLEDAfterGame(void);
 void OLEDStartGame(void);
+void OLEDShowHighscore(void);
+
 
 //char* get_OLEDString(uint8_t OLEDStringID);
 
